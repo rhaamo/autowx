@@ -658,8 +658,8 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
                 ctx['enhancements'].append({
                     'name': enhancement,
                     'img_name': fname,
-                    'filename': os.path.join("/passes", fname),
-                    'log': "{}.txt".format(os.path.join("/passes", fname)),
+                    'filename': os.path.join("/img", fname),
+                    'log': "{}.txt".format(os.path.join("/img", fname)),
                 })
 
         html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
