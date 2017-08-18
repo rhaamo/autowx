@@ -598,10 +598,13 @@ def spectrum(xfilename):
 
 def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time):
     header = False
+    args = 'a'
+
     if not os.path.isfile(config.get('DIRS', 'passesCSV')):
         header = True
+        args = 'w'
 
-    with open(config.get('DIRS', 'passesCSV')) as f:
+    with open(config.get('DIRS', 'passesCSV'), args) as f:
         emerge_time_utc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
         fields = ['sat_name', 'time_now', 'time_emerge_utc', 'aos_time', 'los_time', 'max_elev', 'record_time']
         writer = csv.DictWriter(f, fieldnames=fields)
