@@ -612,9 +612,7 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
         if header:
             writer.writeheader()
 
-        writer.writerow({
-            sat_name, time_now, emerge_time_utc, aos_time, los_time, max_elev, record_time
-        })
+        writer.writerow([sat_name, time_now, emerge_time_utc, aos_time, los_time, max_elev, record_time])
 
 
 def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record_time):
