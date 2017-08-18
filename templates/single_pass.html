@@ -22,7 +22,7 @@
         <div class="header">{{ sat_name }} - Normal Map</div>
         <div class="img">
             <a href="/img_noaa/{{ sat_name }}/{{ img_tstamp }}-normal-map.jpg" title="See full res">
-                <img src="/img_noaa/{{ sat_name }}/{{ img_tstamp }}-normal-map.jpg">
+                <img src="/img_noaa/{{ sat_name }}/{{ img_tstamp }}-normal-map.jpg" width="500px">
             </a>
         </div>
     </div>
@@ -32,8 +32,8 @@
             <div class="picture">
                 <div class="header">{{ sat_name }} - {{ enh['name'] }} Map</div>
                 <div class="img">
-                    <a href="/img_noaa/{{ sat_name }}/{{ img_path }}" title="See full res">
-                        <img src="/img_noaa/{{ sat_name }}/{{ img_path }}">
+                    <a href="/img_noaa/{{ sat_name }}/{{ enh['img_path'] }}" title="See full res">
+                        <img src="/img_noaa/{{ sat_name }}/{{ enh['img_path'] }}" width="500px">
                     </a>
                 </div>
             </div>
