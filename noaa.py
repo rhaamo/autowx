@@ -605,7 +605,7 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
         emerge_time_utc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
         fields = ['sat_name', 'time_now', 'time_emerge_utc', 'aos_time', 'los_time', 'max_elev', 'record_time']
         writer = csv.DictWriter(f, fieldnames=fields)
-        
+
         if header:
             writer.writeheader()
 
@@ -649,6 +649,19 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
             'max_el': max_elev,
             'record_time': record_time,
         }
+
+        if config.getboolean('PROCESSING', 'wxEnhCreate'):
+            ctx['enhancements'] = []
+            for enhancement in config.getlist('PROCESSING', 'wxEnhList'):
+                img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
+                fname = "{}-{}.jpg".format(img_tstamp, enhancement)
+                ctx['enhancements'].append({
+                    'name': enhancement,
+                    'img_name': fname,
+                    'filename': os.path.join("/passes", fname),
+                    'log': "{}.txt".format(os.path.join("/passes", fname)),
+                })
+
         html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
         f.write(html)
         print logLineStart + "Wrote web page for single pass" + logLineEnd

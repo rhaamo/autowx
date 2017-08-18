@@ -15,4 +15,12 @@
             <tr><td>Rec time</td><td>{{record_time}}</td></tr>
         </tbody>
     </table>
+
+    <hr>
+
+    {% if enhancements %}
+        {% for enh in enhancements %}
+            {{ filename }}
+        {% endfor %}
+    {% endif %}
 {% endblock %}
