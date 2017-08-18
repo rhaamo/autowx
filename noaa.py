@@ -10,6 +10,8 @@ import os
 import re
 import sys
 import cfg
+from jinja2 import FileSystemLoader, Environment
+import csv
 
 configFile = 'autowx.ini'
 
@@ -594,6 +596,70 @@ def spectrum(xfilename):
     subprocess.call(cmdline)
 
 
+def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time):
+    header = False
+    if not os.path.isfile(config.get('DIRS', 'passesCSV')):
+        header = True
+
+    with open(config.get('DIRS', 'passesCSV')) as f:
+        emerge_time_utc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
+        fields = ['sat_name', 'time_now', 'time_emerge_utc', 'aos_time', 'los_time', 'max_elev', 'record_time']
+        writer = csv.DictWriter(f, fieldnames=fields)
+        
+        if header:
+            writer.writeheader()
+
+        writer.writerow({
+            sat_name, time_now, emerge_time_utc, aos_time, los_time, max_elev, record_time
+        })
+
+
+def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record_time):
+    if not config.getboolean("[PROCESSING]", "staticWeb"):
+        return
+
+    if 'METEOR' in sat_name:
+        print logLineStart + "METEOR currently not managed for static web pages" + logLineEnd
+        return
+
+    cur_path = os.path.dirname(os.path.abspath(__file__))
+    template_env = Environment(
+        autoescape=False,
+        loader=FileSystemLoader(os.path.join(cur_path, 'templates')),
+        trim_blocks=False)
+
+    def render_template(template, context):
+        return template_env.get_template(template).render(context)
+
+    emerge_time_utc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
+
+    if not os.path.exists(config.get("[DIRS", "staticWeb")):
+        print logLineStart + "PATH for static web doesn't exist, can't generate web pages" + logLineEnd
+        return
+
+    # Generate the web page of the pass itself
+    dst_single_pass = os.path.join(config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc))
+    with open(dst_single_pass, 'w') as f:
+        ctx = {
+            'sat_name': sat_name,
+            'aos_time': aos_time,
+            'los_time': los_time,
+            'time_now': time_now,
+            'emerge_time': emerge_time_utc,
+            'max_el': max_elev,
+            'record_time': record_time,
+        }
+        html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
+        f.write(html)
+        print logLineStart + "Wrote web page for single pass" + logLineEnd
+
+    # Generate the home page of the passes
+    # The CSV is filled even if no static web generation is activated
+    # Cycle over the CSV, regenerating home plus every pages splitted on config.passes_per_page
+
+    print logLineStart + "Finished web page processing" + logLineEnd
+
+
 def find_next_pass():
     predictions = [
         pypredict.aoslos(s,
@@ -666,6 +732,11 @@ while True:
             write_status(freq, aosTime, losTimeCnv, str(losTime), str(recordTime).split(".")[0], satName, maxElev,
                          'DECODING')
             decode_qpsk()
+
+    add_csv_record(satName, now, aosTime, losTime, maxElev, recordTime)
+
+    generate_static_web(satName, now, aosTime, losTime, maxElev, recordTime)
+
     print logLineStart + "Finished pass of " + AsciiColors.YELLOW + satName + AsciiColors.OKGREEN + " at " + \
           AsciiColors.CYAN + losTimeCnv + AsciiColors.OKGREEN + ". Sleeping for" + AsciiColors.CYAN + " 10" + \
           AsciiColors.OKGREEN + " seconds" + logLineEnd
