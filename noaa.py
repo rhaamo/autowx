@@ -643,6 +643,7 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
     if 'NOAA' in sat_name:
         # Generate the web page of the pass itself
         dst_single_pass = os.path.join(config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc))
+        img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
         with open(dst_single_pass, 'w') as f:
             ctx = {
                 'sat_name': sat_name,
@@ -652,18 +653,18 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
                 'emerge_time': emerge_time_utc,
                 'max_el': max_elev,
                 'record_time': record_time,
+                'img_tstamp': img_tstamp,
             }
 
             if config.getboolean('PROCESSING', 'wxEnhCreate'):
                 ctx['enhancements'] = []
                 for enhancement in config.getlist('PROCESSING', 'wxEnhList'):
-                    img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
                     fname = "{}-{}.jpg".format(img_tstamp, enhancement)
                     ctx['enhancements'].append({
                         'name': enhancement,
-                        'img_name': fname,
-                        'filename': os.path.join("/img_noaa", fname),
-                        'log': "{}.txt".format(os.path.join("/img_noaa", fname)),
+                        'img_path': fname,
+                        'img_full_path': os.path.join("/img_noaa", sat_name, fname),
+                        'log': "{}.txt".format(os.path.join("/img_noaa", sat_name, fname)),
                     })
 
             if config.getboolean('PROCESSING', 'createSpectro'):
