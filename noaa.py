@@ -612,11 +612,17 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
         if header:
             writer.writeheader()
 
-        writer.writerow([sat_name, time_now, emerge_time_utc, aos_time, los_time, max_elev, record_time])
+        writer.writerow({'sat_name': sat_name,
+                         'time_now': time_now,
+                         'time_emerge_utc': emerge_time_utc,
+                         'aos_time': aos_time,
+                         'los_time': los_time,
+                         'max_elev': max_elev,
+                         'record_time': record_time})
 
 
 def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record_time):
-    if not config.getboolean("[PROCESSING]", "staticWeb"):
+    if not config.getboolean("PROCESSING", "staticWeb"):
         return
 
     cur_path = os.path.dirname(os.path.abspath(__file__))
@@ -630,7 +636,7 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
 
     emerge_time_utc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
 
-    if not os.path.exists(config.get("[DIRS", "staticWeb")):
+    if not os.path.exists(config.get("DIRS", "staticWeb")):
         print logLineStart + "PATH for static web doesn't exist, can't generate web pages" + logLineEnd
         return
 
