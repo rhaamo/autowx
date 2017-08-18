@@ -618,10 +618,6 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
     if not config.getboolean("[PROCESSING]", "staticWeb"):
         return
 
-    if 'METEOR' in sat_name:
-        print logLineStart + "METEOR currently not managed for static web pages" + logLineEnd
-        return
-
     cur_path = os.path.dirname(os.path.abspath(__file__))
     template_env = Environment(
         autoescape=False,
@@ -637,34 +633,45 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
         print logLineStart + "PATH for static web doesn't exist, can't generate web pages" + logLineEnd
         return
 
-    # Generate the web page of the pass itself
-    dst_single_pass = os.path.join(config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc))
-    with open(dst_single_pass, 'w') as f:
-        ctx = {
-            'sat_name': sat_name,
-            'aos_time': aos_time,
-            'los_time': los_time,
-            'time_now': time_now,
-            'emerge_time': emerge_time_utc,
-            'max_el': max_elev,
-            'record_time': record_time,
-        }
+    if 'NOAA' in sat_name:
+        # Generate the web page of the pass itself
+        dst_single_pass = os.path.join(config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc))
+        with open(dst_single_pass, 'w') as f:
+            ctx = {
+                'sat_name': sat_name,
+                'aos_time': aos_time,
+                'los_time': los_time,
+                'time_now': time_now,
+                'emerge_time': emerge_time_utc,
+                'max_el': max_elev,
+                'record_time': record_time,
+            }
 
-        if config.getboolean('PROCESSING', 'wxEnhCreate'):
-            ctx['enhancements'] = []
-            for enhancement in config.getlist('PROCESSING', 'wxEnhList'):
-                img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
-                fname = "{}-{}.jpg".format(img_tstamp, enhancement)
-                ctx['enhancements'].append({
-                    'name': enhancement,
-                    'img_name': fname,
-                    'filename': os.path.join("/img", fname),
-                    'log': "{}.txt".format(os.path.join("/img", fname)),
-                })
+            if config.getboolean('PROCESSING', 'wxEnhCreate'):
+                ctx['enhancements'] = []
+                for enhancement in config.getlist('PROCESSING', 'wxEnhList'):
+                    img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
+                    fname = "{}-{}.jpg".format(img_tstamp, enhancement)
+                    ctx['enhancements'].append({
+                        'name': enhancement,
+                        'img_name': fname,
+                        'filename': os.path.join("/img_noaa", fname),
+                        'log': "{}.txt".format(os.path.join("/img_noaa", fname)),
+                    })
 
-        html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
-        f.write(html)
-        print logLineStart + "Wrote web page for single pass" + logLineEnd
+            if config.getboolean('PROCESSING', 'createSpectro'):
+                fname = "{}-{}.png".format(sat_name.replace(" ", ""), str(aos_time))
+                ctx['spectro'] = {
+                    'filename': os.path.join("/spectro_noaa", fname)
+                }
+
+            html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
+            f.write(html)
+            print logLineStart + "Wrote web page for single NOAA pass" + logLineEnd
+
+    if 'METEOR' in sat_name:
+        print logLineStart + "METEOR currently not managed for static web pages" + logLineEnd
+        return
 
     # Generate the home page of the passes
     # The CSV is filled even if no static web generation is activated
