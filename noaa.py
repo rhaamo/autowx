@@ -12,6 +12,7 @@ import sys
 import cfg
 from jinja2 import FileSystemLoader, Environment
 import csv
+import dateutil
 
 configFile = 'autowx.ini'
 
@@ -621,6 +622,13 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
                          'record_time': record_time})
 
 
+def format_datetime(date, fmt=None):
+    date = dateutil.parser.parse(date)
+    native = date.replace(tzinfo=None)
+    fmt='%Y/%m/%d %H:%M'
+    return native.strftime(fmt)
+
+
 def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record_time):
     if not config.getboolean("PROCESSING", "staticWeb"):
         return
@@ -630,6 +638,7 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
         autoescape=False,
         loader=FileSystemLoader(os.path.join(cur_path, 'templates')),
         trim_blocks=False)
+    template_env.filters['datetime'] = format_datetime
 
     def render_template(template, context):
         return template_env.get_template(template).render(context)
