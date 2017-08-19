@@ -659,7 +659,7 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
             if config.getboolean('PROCESSING', 'wxEnhCreate'):
                 ctx['enhancements'] = []
                 for enhancement in config.getlist('PROCESSING', 'wxEnhList'):
-                    fname = "{}-{}.jpg".format(img_tstamp, enhancement)
+                    fname = "{}-{}-map.jpg".format(img_tstamp, enhancement)
                     ctx['enhancements'].append({
                         'name': enhancement,
                         'img_path': fname,
