@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block title %}Automatic Decoding of Weather Satellites{% endblock %}
+
+{% block content %}
+<div class="row"><div class="col"><h1>Automatic Recording and Decoding of Low Earth Orbit Satellites. page nb. {{ page }}</h1></div></div>
+
+<div class="row">
+    <div class="col">
+        <ul>
+            {% for satpass in passes %}
+                <li><a href="/{{ satpass['time_emerge_utc'] | replace(':', '-') }}.html">{{satpass['time_emerge_utc'] | datetime(true) }} - {{ satpass['sat_name'] }} - {{ 'max_elev' }}&deg; el</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

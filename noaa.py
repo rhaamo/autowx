@@ -696,10 +696,33 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
     # The CSV is filled even if no static web generation is activated
     # Cycle over the CSV, regenerating home plus every pages splitted on config.passes_per_page
 
+    passes = []
+
     with open(config.get('DIRS', 'passesCSV'), 'rb') as f:
-        csv_reader = csv.reader(f)
+        csv_reader = csv.DictReader(f)
         for row in csv_reader:
-            print row
+            passes.append(row)
+
+    # (re)generate the home page
+    page = 0
+    passes_per_pages = config.getint('STATIC_WEB', 'passes_per_page')
+    home_passes = passes[0:passes_per_pages]
+
+    index_page = os.path.join(
+        config.get("DIRS", "staticWeb"), "index.html")
+    with open(index_page, 'w') as f:
+        ctx = {
+            'passes': home_passes,
+            'passes_per_pages': passes_per_pages,
+            'page': page,
+        }
+        html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
+        f.write(html)
+        print logLineStart + "Wrote web page for index passes, page 0" + logLineEnd
+
+    if len(passes) > passes_per_pages:
+        # We have more pages to show
+        pass
 
     print logLineStart + "Finished web page processing" + logLineEnd
 
