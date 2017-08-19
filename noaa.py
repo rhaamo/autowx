@@ -609,7 +609,7 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
         args = 'w'
 
     with open(config.get('DIRS', 'passesCSV'), args) as f:
-        emerge_time_utc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
+        emerge_time_utc = time.gmtime(aos_time)
         fields = ['sat_name', 'time_now', 'time_emerge_utc', 'aos_time', 'los_time', 'max_elev', 'record_time']
         writer = csv.DictWriter(f, fieldnames=fields)
 
