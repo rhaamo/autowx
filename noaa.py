@@ -652,7 +652,8 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
 
     if 'NOAA' in sat_name:
         # Generate the web page of the pass itself
-        dst_single_pass = os.path.join(config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc))
+        dst_single_pass = os.path.join(
+            config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc.replace(":", "-")))
         img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
         with open(dst_single_pass, 'w') as f:
             ctx = {
