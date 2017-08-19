@@ -600,6 +600,10 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
     header = False
     args = 'a'
 
+    if 'METEOR' in sat_name:
+        print logLineStart + "METEOR currently not managed for static web pages, not adding CSV record" + logLineEnd
+        return
+
     if not os.path.isfile(config.get('DIRS', 'passesCSV')):
         header = True
         args = 'w'
