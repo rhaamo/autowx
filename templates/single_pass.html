@@ -38,16 +38,20 @@
 <hr>
 
 {% if enhancements %}
-    {% for enh in enhancements %}
-        <div class="picture">
-            <div class="header">{{ sat_name }} - {{ enh['name'] }} Map</div>
-            <div class="img">
-                <a href="/img_noaa/{{ sat_name }}/{{ enh['img_path'] }}" title="See full res">
-                    <img src="/img_noaa/{{ sat_name }}/{{ enh['img_path'] }}" width="500px">
-                </a>
+    <div class="row">
+        {% for enh in enhancements %}
+            <div class="col">
+                <div class="picture">
+                    <div class="header">{{ sat_name }} - {{ enh['name'] }} Map</div>
+                    <div class="img">
+                        <a href="/img_noaa/{{ sat_name }}/{{ enh['img_path'] }}" title="See full res">
+                            <img src="/img_noaa/{{ sat_name }}/{{ enh['img_path'] }}" width="500px">
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    <div class="row">
 {% endif %}
 
 {% endblock %}
