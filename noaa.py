@@ -12,7 +12,6 @@ import sys
 import cfg
 from jinja2 import FileSystemLoader, Environment
 import csv
-import dateutil
 
 configFile = 'autowx.ini'
 
@@ -622,11 +621,12 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
                          'record_time': record_time})
 
 
-def format_datetime(date, fmt=None):
-    date = dateutil.parser.parse(date)
-    native = date.replace(tzinfo=None)
+def format_datetime(date, utc=False, fmt=None):
     fmt='%Y/%m/%d %H:%M'
-    return native.strftime(fmt)
+    if utc:
+        return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
+    else:
+        return datetime.datetime.fromtimestamp(date).strftime(fmt)
 
 
 def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record_time):
@@ -693,6 +693,11 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
     # Generate the home page of the passes
     # The CSV is filled even if no static web generation is activated
     # Cycle over the CSV, regenerating home plus every pages splitted on config.passes_per_page
+
+    with open(config.get('DIRS', 'passesCSV'), 'rb') as f:
+        csv_reader = csv.reader(f)
+        for row in csv_reader:
+            print row
 
     print logLineStart + "Finished web page processing" + logLineEnd
 

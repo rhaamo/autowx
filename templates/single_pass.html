@@ -1,20 +1,20 @@
 {% extends "layout.html" %}
 
-{% block title %}{{ sat_name }} AOS: {{ aos_time | datetime }} LOS: {{ los_time | datetime }}{% endblock %}
+{% block title %}{{ sat_name }} AOS: {{ aos_time | datetime(false) }} LOS: {{ los_time | datetime(false) }}{% endblock %}
 
 {% block content %}
-<div class="row"><div class="col"><h1>{{ sat_name }} on {{ time_now | datetime }}</h1></div></div>
+<div class="row"><div class="col"><h1>{{ sat_name }} on {{ time_now | datetime(true) }}</h1></div></div>
 
 <div class="row">
     <div class="col">
         <table class="table">
             <tbody>
                 <tr><td>Sat</td><td>{{ sat_name}}</td></tr>
-                <tr><td>AOS</td><td>{{ aos_time | datetime }}</td></tr>
-                <tr><td>LOS</td><td>{{ los_time | datetime }}</td></tr>
+                <tr><td>AOS</td><td>{{ aos_time | datetime(false) }}</td></tr>
+                <tr><td>LOS</td><td>{{ los_time | datetime(false) }}</td></tr>
                 <tr><td>Max El</td><td>{{ max_el }}</td></tr>
-                <tr><td>Start</td><td>{{ time_now | datetime }}</td></tr>
-                <tr><td>Rec time</td><td>{{ record_time }}</td></tr>
+                <tr><td>Start</td><td>{{ time_now | datetime(false) }}</td></tr>
+                <tr><td>Rec time</td><td>{{ record_time(false) }}</td></tr>
             </tbody>
         </table>
     </div>
