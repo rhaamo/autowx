@@ -622,10 +622,11 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
 
 
 def format_datetime(date, utc=False, fmt=None):
-    fmt='%Y/%m/%d %H:%M'
     if utc:
+        fmt = '%Y/%m/%d %H:%M UTC'
         return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
     else:
+        fmt = '%Y/%m/%d %H:%M'
         return datetime.datetime.fromtimestamp(date).strftime(fmt)
 
 
