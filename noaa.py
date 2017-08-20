@@ -629,6 +629,12 @@ def format_datetime(date, utc=False, fmt=None):
     if type(date) == str:
         date = float(date)
 
+    if fmt and utc:
+        return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
+
+    if fmt and not utc:
+        return datetime.datetime.fromtimestamp(date).strftime(fmt)
+
     if utc:
         fmt = '%Y/%m/%d %H:%M UTC'
         return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
