@@ -752,7 +752,7 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
             html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
             f.write(html)
             print logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
-                page, start_passes, passes_per_pages + 1
+                page, start_passes, start_passes + passes_per_pages
             ) + logLineEnd
 
     print logLineStart + "Finished web page processing" + logLineEnd
