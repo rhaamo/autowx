@@ -596,7 +596,7 @@ def spectrum(xfilename):
     subprocess.call(cmdline)
 
 
-def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time):
+def add_csv_record(sat_name, automate_started, aos_time, los_time, max_elev, record_time):
     header = False
     args = 'a'
 
@@ -609,41 +609,35 @@ def add_csv_record(sat_name, time_now, aos_time, los_time, max_elev, record_time
         args = 'w'
 
     with open(config.get('DIRS', 'passesCSV'), args) as f:
-        emerge_time_utc = time.mktime(time.gmtime(aos_time))
-        fields = ['sat_name', 'time_now', 'time_emerge_utc', 'aos_time', 'los_time', 'max_elev', 'record_time']
+        fields = ['sat_name', 'automate_started', 'aos_time', 'los_time', 'max_elev', 'record_time']
         writer = csv.DictWriter(f, fieldnames=fields)
 
         if header:
             writer.writeheader()
 
         writer.writerow({'sat_name': sat_name,
-                         'time_now': time_now,
-                         'time_emerge_utc': emerge_time_utc,
+                         'automate_started': automate_started,
                          'aos_time': aos_time,
                          'los_time': los_time,
                          'max_elev': max_elev,
-                         'record_time': record_time})
+                         'record_time': round(record_time)
+                         })
 
 
 def format_datetime(date, utc=False, fmt=None):
     if type(date) == str:
         date = float(date)
 
-    if fmt and utc:
-        return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
-
-    if fmt and not utc:
-        return datetime.datetime.fromtimestamp(date).strftime(fmt)
+    if not fmt:
+        fmt = '%Y-%m-%d %H:%M:%S'
 
     if utc:
-        fmt = '%Y/%m/%d %H:%M UTC'
         return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
-    else:
-        fmt = '%Y/%m/%d %H:%M'
-        return datetime.datetime.fromtimestamp(date).strftime(fmt)
+
+    return datetime.datetime.fromtimestamp(date).strftime(fmt)
 
 
-def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record_time):
+def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev, record_time):
     if not config.getboolean("PROCESSING", "staticWeb"):
         return
 
@@ -665,16 +659,19 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
 
     if 'NOAA' in sat_name:
         # Generate the web page of the pass itself
+
+        # time is UTC
         dst_single_pass = os.path.join(
             config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc.replace(":", "-")))
+
+        # timestamp - local time
         img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
         with open(dst_single_pass, 'w') as f:
             ctx = {
                 'sat_name': sat_name,
-                'aos_time': aos_time,
-                'los_time': los_time,
-                'time_now': time_now,
-                'emerge_time': emerge_time_utc,
+                'aos_time': aos_time,  # localtime
+                'los_time': los_time,  # localtime
+                'automate_started': automate_started,  # UTC (from time.time())
                 'max_el': max_elev,
                 'record_time': record_time,
                 'img_tstamp': img_tstamp,
@@ -715,6 +712,8 @@ def generate_static_web(sat_name, time_now, aos_time, los_time, max_elev, record
         csv_reader = csv.DictReader(f)
         for row in csv_reader:
             passes.append(row)
+
+    passes = list(reversed(passes))  # reverse the list, latest first
 
     # (re)generate the home page
     page = 0
