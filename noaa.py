@@ -726,16 +726,34 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
         ctx = {
             'passes': home_passes,
             'passes_per_pages': passes_per_pages,
+            'start': 0,
             'total': len(passes),
             'page': page,
         }
         html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
         f.write(html)
-        print logLineStart + "Wrote web page for index passes, page 0" + logLineEnd
+        print logLineStart + "Wrote web page for index passes, page 0 0-{}".format(passes_per_pages) + logLineEnd
 
     if len(passes) > passes_per_pages:
         # We have more pages to show
-        pass
+        page = page + 1
+        start_passes = (page * passes_per_pages) + 1
+        page_passes = passes[start_passes:start_passes + passes_per_pages]
+        passes_page = os.path.join(config.get("DIRS", "staticWeb"), "index_{}.html".format(page))
+
+        with open(passes_page, 'w') as f:
+            ctx = {
+                'passes': page_passes,
+                'passes_per_pages': passes_per_pages,
+                'start': start_passes,
+                'total': len(passes),
+                'page': page,
+            }
+            html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
+            f.write(html)
+            print logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
+                page, start_passes, passes_per_pages + 1
+            ) + logLineEnd
 
     print logLineStart + "Finished web page processing" + logLineEnd
 
