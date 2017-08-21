@@ -733,7 +733,7 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
             'total': len(passes),
             'page': page,
             'pages': pages,
-            'pages_list': range(0, pages + 1),
+            'pages_list': range(0, pages),
         }
         html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
         f.write(html)
@@ -754,7 +754,7 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
                 'total': len(passes),
                 'page': page,
                 'pages': pages,
-                'pages_list': range(0, pages + 1),
+                'pages_list': range(0, pages),
             }
             html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
             f.write(html)
