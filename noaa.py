@@ -726,6 +726,7 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
         ctx = {
             'passes': home_passes,
             'passes_per_pages': passes_per_pages,
+            'total': len(passes),
             'page': page,
         }
         html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
