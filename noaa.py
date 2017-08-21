@@ -12,6 +12,7 @@ import sys
 import cfg
 from jinja2 import FileSystemLoader, Environment
 import csv
+import math
 
 configFile = 'autowx.ini'
 
@@ -716,8 +717,10 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
     passes = list(reversed(passes))  # reverse the list, latest first
 
     # (re)generate the home page
-    page = 0
     passes_per_pages = config.getint('STATIC_WEB', 'passes_per_page')
+
+    page = 0
+    pages = int(math.ceil(float(len(passes)) / float(passes_per_pages)))
     home_passes = passes[0:passes_per_pages]
 
     index_page = os.path.join(
@@ -729,6 +732,8 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
             'start': 0,
             'total': len(passes),
             'page': page,
+            'pages': pages,
+            'pages_list': range(0, pages + 1),
         }
         html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
         f.write(html)
@@ -748,6 +753,8 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
                 'start': start_passes,
                 'total': len(passes),
                 'page': page,
+                'pages': pages,
+                'pages_list': range(0, pages + 1),
             }
             html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
             f.write(html)

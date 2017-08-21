@@ -19,4 +19,22 @@
     <div class="col">Displaying {{ passes_per_pages }} of {{ total }} passes.</div>
 </div>
 
+<div class="row">
+    <div class="col">
+        Page:
+        {% if pages == 1 %}
+            <a href="/index.html">1</a>
+        {% else %}
+            {% for p in pages_list %}
+                {% if p == 1 %}
+                    <a href="/index.html">1</a>&nbsp;
+                {% else %}
+                    <a href="/index_{{ p + 1 }}.html">{{ p + 1 }}</a>&nbsp;
+                {% end %}
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+
 {% endblock %}
