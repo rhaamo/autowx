@@ -11,7 +11,12 @@
     <div class="col">
         <ul>
             {% for satpass in passes %}
-                <li><a href="/{{ satpass['aos_time'] | datetime(true, '%Y-%m-%dT%H-%M-%S') }}.html">{{satpass['aos_time'] | datetime(true) }} UTC - {{ satpass['sat_name'] }} - {{ satpass['max_elev'] }}&deg; el</a></li>
+                <li>
+                    <a href="/{{ satpass['aos_time'] | datetime(true, '%Y-%m-%dT%H-%M-%S') }}.html">
+                        {{satpass['aos_time'] | datetime(true) }} UTC - {{ satpass['sat_name'] }} - {{ satpass['max_elev'] }}&deg; el</a>
+                    <br />
+                    <img src="/img_noaa/{{ satpass['sat_name'] }}/.thumb_sm_{{ satpass['aos_time'] | datetime(true, '%Y-%m-%dT%H-%M-%S') }}-normal-map.jpg" width="200px">
+                </li>
             {% endfor %}
         </ul>
     </div>
