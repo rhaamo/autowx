@@ -32,7 +32,7 @@
                     <a href="/index.html">1</a>&nbsp;
                 {% else %}
                     {% if p == page %}<b>{% endif %}
-                    <a href="/index_{{ p }}.html">{{ p }}</a>
+                    <a href="/index_{{ p }}.html">{{ p + 1 }}</a>
                     {% if p == page %}</b>{% endif %}&nbsp;
                 {% endif %}
             {% endfor %}
