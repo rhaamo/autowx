@@ -13,6 +13,14 @@ import cfg
 from jinja2 import FileSystemLoader, Environment
 import csv
 import math
+from wand.image import Image
+
+THUMBNAILS_NOAA = {
+    "norm_thumb": (400, 354),
+    "norm_thumb_sm": (200, 177),
+    "enh_thumb": (400, 809),
+    "enh_thumb_sm": (300, 607)
+}
 
 configFile = 'autowx.ini'
 
@@ -223,6 +231,13 @@ def create_overlay(filename, aos_time, sat_name, record_len):
     subprocess.call(cmdline, stderr=overlay_log, stdout=overlay_log)
     overlay_log.close()
 
+    # Generate thumbnail for overlay
+    thumb_dst = os.path.join(config.get('DIRS', 'map'), ".thumb_" + filename + "-map.png")
+    thumb_dst_sm = os.path.join(config.get('DIRS', 'map'), ".thumb_sm_" + filename + "-map.png")
+
+    generate_thumbnail(mapfname + '-map.png', thumb_dst, THUMBNAILS_NOAA['enh_thumb'])
+    generate_thumbnail(mapfname + '-map.png', thumb_dst_sm, THUMBNAILS_NOAA['enh_thumb_sm'])
+
 
 def decode_qpsk():
     # TODO write config for decode_meteor.sh
@@ -267,6 +282,15 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
         log_cmdline("DECODE WXTOIMG NORMALMAP", cmdline)
         subprocess.call(cmdline, stderr=m, stdout=m)
         m.close()
+
+        # Generate thumbnails for normal map
+        thumb_norm_dst = os.path.join(config.get('DIRS', 'img'), sat_name,
+                                      ".thumb_{}-normal-map.jpg".format(file_name_c))
+        thumb_norm_dst_sm = os.path.join(config.get('DIRS', 'img'), sat_name,
+                                         ".thumb_sm_{}-normal-map.jpg".format(file_name_c))
+
+        generate_thumbnail(out_img, thumb_norm_dst, THUMBNAILS_NOAA['norm_thumb'])
+        generate_thumbnail(out_img, thumb_norm_dst_sm, THUMBNAILS_NOAA['norm_thumb_sm'])
 
         # Maybe use a default better than None...
         channel_a, channel_b = None, None
@@ -437,6 +461,17 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                             enhancements_out_map]
                 log_cmdline("ENHANCEMENTS WXTOIMG", cmdline_enhancements)
                 subprocess.call(cmdline_enhancements, stderr=enhancements_log, stdout=enhancements_log)
+
+                # Generate thumbnails for enhancement map
+                thumb_enh_dst = os.path.join(config.get('DIRS', 'img'),
+                                             sat_name,
+                                             ".thumb_{}-{}-map.jpg".format(file_name_c, enhancements))
+                thumb_enh_dst_sm = os.path.join(config.get('DIRS', 'img'),
+                                                sat_name,
+                                                ".thumb_sm_{}-{}-map.jpg".format(file_name_c, enhancements))
+
+                generate_thumbnail(enhancements_out_map, thumb_enh_dst, THUMBNAILS_NOAA['enh_thumb'])
+                generate_thumbnail(enhancements_out_map, thumb_enh_dst_sm, THUMBNAILS_NOAA['enh_thumb_sm'])
 
                 for psikus in open(map_txt, "r").readlines():
                     res = psikus.replace("\n", " \n")
@@ -636,6 +671,17 @@ def format_datetime(date, utc=False, fmt=None):
         return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
 
     return datetime.datetime.fromtimestamp(date).strftime(fmt)
+
+
+def generate_thumbnail(src, dst, size):
+    if not os.path.isfile(src):
+        print logLineStart + "Issue generating thumbnail, file not found: {}".format(src) + logLineEnd
+        return
+
+    im = Image.open(src)
+    im.thumbnail(size, Image.ANTIALIAS)
+    im.save(dst)
+    print logLineStart + "Generated thumbnail {}x{}: {}".format(size[0], size[1], dst) + logLineEnd
 
 
 def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev, record_time):
