@@ -691,7 +691,7 @@ def sat_type(sat_name):
 
 
 # Meteor is currently not managed
-def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev, record_time, overlay_fname):
+def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev, record_time):
     if not config.getboolean("PROCESSING", "staticWeb"):
         return
 
@@ -729,7 +729,6 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
             'record_time': record_time,
             'img_tstamp': img_tstamp,
             'sat_type': sat_type(sat_name),
-            'overlay_fname': overlay_fname,
         }
 
         if config.getboolean('PROCESSING', 'wxEnhCreate'):
@@ -896,7 +895,7 @@ while True:
     # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
     if 'NOAA' in satName:
         add_csv_record(satName, now, aosTime, losTime, maxElev, recordTime)
-        generate_static_web(satName, now, aosTime, losTime, maxElev, recordTime, fname)
+        generate_static_web(satName, now, aosTime, losTime, maxElev, recordTime)
     else:
         print "METEOR currently not managed for static webpages generation"
 
