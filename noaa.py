@@ -681,18 +681,18 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
             if config.getboolean('PROCESSING', 'wxEnhCreate'):
                 ctx['enhancements'] = []
                 for enhancement in config.getlist('PROCESSING', 'wxEnhList'):
-                    fname = "{}-{}-map.jpg".format(img_tstamp, enhancement)
+                    filename = "{}-{}-map.jpg".format(img_tstamp, enhancement)
                     ctx['enhancements'].append({
                         'name': enhancement,
-                        'img_path': fname,
-                        'img_full_path': os.path.join("/img_noaa", sat_name, fname),
-                        'log': "{}.txt".format(os.path.join("/img_noaa", sat_name, fname)),
+                        'img_path': filename,
+                        'img_full_path': os.path.join("/img_noaa", sat_name, filename),
+                        'log': "{}.txt".format(os.path.join("/img_noaa", sat_name, filename)),
                     })
 
             if config.getboolean('PROCESSING', 'createSpectro'):
-                fname = "{}-{}.png".format(sat_name.replace(" ", ""), str(aos_time))
+                filename = "{}-{}.png".format(sat_name.replace(" ", ""), str(aos_time))
                 ctx['spectro'] = {
-                    'filename': os.path.join("/spectro_noaa", fname)
+                    'filename': os.path.join("/spectro_noaa", filename)
                 }
 
             html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
