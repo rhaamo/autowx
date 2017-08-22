@@ -31,7 +31,9 @@
                 {% if p == 0 %}
                     <a href="/index.html">1</a>&nbsp;
                 {% else %}
-                    <a href="/index_{{ p }}.html">{{ p }}</a>&nbsp;
+                    {% if p == page %}<b>{% endif %}
+                    <a href="/index_{{ p }}.html">{{ p }}</a>
+                    {% if p == page %}</b>{% endif %}&nbsp;
                 {% endif %}
             {% endfor %}
         {% endif %}
