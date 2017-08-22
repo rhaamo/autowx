@@ -737,30 +737,32 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
         }
         html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
         f.write(html)
+        page = 1  # index created, increment page
         print logLineStart + "Wrote web page for index passes, page 0 0-{}".format(passes_per_pages) + logLineEnd
 
     if len(passes) > passes_per_pages:
         # We have more pages to show
-        page = page + 1
-        start_passes = (page * passes_per_pages)
-        page_passes = passes[start_passes:start_passes + passes_per_pages]
-        passes_page = os.path.join(config.get("DIRS", "staticWeb"), "index_{}.html".format(page))
+        for p in range(1, pages):
+            start_passes = (page * passes_per_pages)
+            page_passes = passes[start_passes:start_passes + passes_per_pages]
+            passes_page = os.path.join(config.get("DIRS", "staticWeb"), "index_{}.html".format(page))
 
-        with open(passes_page, 'w') as f:
-            ctx = {
-                'passes': page_passes,
-                'passes_per_pages': passes_per_pages,
-                'start': start_passes,
-                'total': len(passes),
-                'page': page,
-                'pages': pages,
-                'pages_list': range(0, pages),
-            }
-            html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
-            f.write(html)
-            print logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
-                page, start_passes, start_passes + passes_per_pages
-            ) + logLineEnd
+            with open(passes_page, 'w') as f:
+                ctx = {
+                    'passes': page_passes,
+                    'passes_per_pages': passes_per_pages,
+                    'start': start_passes,
+                    'total': len(passes),
+                    'page': page,
+                    'pages': pages,
+                    'pages_list': range(0, pages),
+                }
+                html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
+                f.write(html)
+                print logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
+                    page, start_passes, start_passes + passes_per_pages
+                ) + logLineEnd
+            page = page + 1  # page created, increment
 
     print logLineStart + "Finished web page processing" + logLineEnd
 
