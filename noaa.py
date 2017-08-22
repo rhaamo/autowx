@@ -674,9 +674,9 @@ def generate_thumbnail(src, dst, size):
         print logLineStart + "Issue generating thumbnail, file not found: {}".format(src) + logLineEnd
         return
 
-    with Image(file=src) as f:
+    with Image(filename=src) as f:
         f.resize(size[0], size[1])
-        f.save(dst)
+        f.save(filename=dst)
 
     print logLineStart + "Generated thumbnail {}x{}: {}".format(size[0], size[1], dst) + logLineEnd
 
