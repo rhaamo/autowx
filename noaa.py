@@ -742,7 +742,7 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
     if len(passes) > passes_per_pages:
         # We have more pages to show
         page = page + 1
-        start_passes = (page * passes_per_pages) + 1
+        start_passes = (page * passes_per_pages)
         page_passes = passes[start_passes:start_passes + passes_per_pages]
         passes_page = os.path.join(config.get("DIRS", "staticWeb"), "index_{}.html".format(page))
 
