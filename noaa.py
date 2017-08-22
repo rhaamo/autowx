@@ -636,10 +636,6 @@ def add_csv_record(sat_name, automate_started, aos_time, los_time, max_elev, rec
     header = False
     args = 'a'
 
-    if 'METEOR' in sat_name:
-        print logLineStart + "METEOR currently not managed for static web pages, not adding CSV record" + logLineEnd
-        return
-
     if not os.path.isfile(config.get('DIRS', 'passesCSV')):
         header = True
         args = 'w'
@@ -712,10 +708,6 @@ def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev
 
     if not os.path.exists(config.get("DIRS", "staticWeb")):
         print logLineStart + "PATH for static web doesn't exist, can't generate web pages" + logLineEnd
-        return
-
-    if 'METEOR' in sat_name:
-        print logLineStart + "METEOR currently not managed for static web pages" + logLineEnd
         return
 
     # Generate the web page of the pass itself
@@ -898,9 +890,13 @@ while True:
                          'DECODING')
             decode_qpsk()
 
-    add_csv_record(satName, now, aosTime, losTime, maxElev, recordTime)
-
-    generate_static_web(satName, now, aosTime, losTime, maxElev, recordTime)
+    # No METEOR currently managed
+    # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
+    if 'NOAA' in satName:
+        add_csv_record(satName, now, aosTime, losTime, maxElev, recordTime)
+        generate_static_web(satName, now, aosTime, losTime, maxElev, recordTime)
+    else:
+        print "METEOR currently not managed for static webpages generation"
 
     print logLineStart + "Finished pass of " + AsciiColors.YELLOW + satName + AsciiColors.OKGREEN + " at " + \
           AsciiColors.CYAN + losTimeCnv + AsciiColors.OKGREEN + ". Sleeping for" + AsciiColors.CYAN + " 10" + \
