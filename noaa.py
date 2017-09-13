@@ -674,7 +674,7 @@ def auto_sat_magic(config, cfg_file):
         # No METEOR currently managed
         # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
         if 'NOAA' in satName:
-            web.add_csv_record(config, satName, now, aosTime, losTime, maxElev, record_time)
+            web.add_db_record(config, satName, now, aosTime, losTime, maxElev, record_time)
             web.generate_static_web(config, satName, now, aosTime, losTime, maxElev, record_time)
         else:
             print "METEOR currently not managed for static webpages generation"

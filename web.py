@@ -1,36 +1,28 @@
 # -*- coding: utf-8 -*-
 from jinja2 import FileSystemLoader, Environment
-import csv
 import math
 from wand.image import Image
 import os
 import datetime
 import cfg
 import time
+import models
 
 
-def add_csv_record(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
-    header = False
-    args = 'a'
+def add_db_record(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
+    engine = models.create_engine(config)
+    session = models.get_session(engine)
 
-    if not os.path.isfile(config.get('DIRS', 'passesCSV')):
-        header = True
-        args = 'w'
+    sat_pass = models.Passes()
+    sat_pass.sat_name = sat_name
+    sat_pass.automate_started = automate_started
+    sat_pass.aos_time = aos_time
+    sat_pass.los_time = los_time
+    sat_pass.max_elev = max_elev
+    sat_pass.record_time = record_time
 
-    with open(config.get('DIRS', 'passesCSV'), args) as f:
-        fields = ['sat_name', 'automate_started', 'aos_time', 'los_time', 'max_elev', 'record_time']
-        writer = csv.DictWriter(f, fieldnames=fields)
-
-        if header:
-            writer.writeheader()
-
-        writer.writerow({'sat_name': sat_name,
-                         'automate_started': automate_started,
-                         'aos_time': aos_time,
-                         'los_time': los_time,
-                         'max_elev': max_elev,
-                         'record_time': round(record_time)
-                         })
+    session.add(sat_pass)
+    session.commit()
 
 
 def format_datetime(date, utc=False, fmt=None):
@@ -71,6 +63,9 @@ def sat_type(sat_name):
 def generate_static_web(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
     if not config.getboolean("PROCESSING", "staticWeb"):
         return
+
+    engine = models.create_engine(config)
+    session = models.get_session(engine)
 
     cur_path = os.path.dirname(os.path.abspath(__file__))
     template_env = Environment(
@@ -133,16 +128,8 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
     # The CSV is filled even if no static web generation is activated
     # Cycle over the CSV, regenerating home plus every pages splitted on config.passes_per_page
 
-    passes = []
-
-    with open(config.get('DIRS', 'passesCSV'), 'rb') as f:
-        csv_reader = csv.DictReader(f)
-        for row in csv_reader:
-            r = row
-            r['sat_type'] = sat_type(sat_name)
-            passes.append(r)
-
-    passes = list(reversed(passes))  # reverse the list, latest first
+    # Latest first
+    passes = session.query(models.Passes).order_by(models.Passes.aos_time.asc())
 
     # (re)generate the home page
     passes_per_pages = config.getint('STATIC_WEB', 'passes_per_page')
