@@ -3,3 +3,5 @@ docopt
 pypredict
 Wand
 sqlalchemy
+matplotlib
+numpy
