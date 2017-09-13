@@ -67,7 +67,7 @@ def static_web_generation(config):
     passes = session.query(models.Passes).order_by(models.Passes.aos_time.asc())
 
     print passes
-    
+
 
 # Meteor is currently not managed
 def generate_static_web(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):

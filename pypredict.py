@@ -35,11 +35,11 @@ def aoslos(satname, min_elev, min_elev_meteor, station_lat, station_lon, station
     min_elev = int(min_elev)
     min_elev_meteor = int(min_elev_meteor)
     # Recording delay
-    opoznienie = '1'
+    delay = '1'
     # delay meteor to ~12° - 15°
     meteor_delay = '180'
     # Recording short
-    skrocenie = '1'
+    short = '1'
     # Shorten meteor recording by ~12° - 15°
     meteor_short = '180'
     # Predicting
@@ -47,37 +47,37 @@ def aoslos(satname, min_elev, min_elev_meteor, station_lat, station_lon, station
         p = predict.transits(tle_noaa15, qth)
         for i in range(1, 20):
             transit = p.next()
-            przelot_start = int(transit.start) + int(opoznienie)
-            przelot_czas = int(transit.duration()) - (int(skrocenie) + int(opoznienie))
-            przelot_koniec = int(przelot_start) + int(przelot_czas)
+            aos_start = int(transit.start) + int(delay)
+            aos_time = int(transit.duration()) - (int(short) + int(delay))
+            aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev:
-                return int(przelot_start), int(przelot_koniec), int(przelot_czas), int(transit.peak()['elevation'])
+                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
     elif satname in "NOAA 18":
         p = predict.transits(tle_noaa18, qth)
         for i in range(1, 20):
             transit = p.next()
-            przelot_start = int(transit.start) + int(opoznienie)
-            przelot_czas = int(transit.duration()) - (int(skrocenie) + int(opoznienie))
-            przelot_koniec = int(przelot_start) + int(przelot_czas)
+            aos_start = int(transit.start) + int(delay)
+            aos_time = int(transit.duration()) - (int(short) + int(delay))
+            aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev:
-                return int(przelot_start), int(przelot_koniec), int(przelot_czas), int(transit.peak()['elevation'])
+                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
     elif satname in "NOAA 19":
         p = predict.transits(tle_noaa19, qth)
         for i in range(1, 20):
             transit = p.next()
-            przelot_start = int(transit.start) + int(opoznienie)
-            przelot_czas = int(transit.duration()) - (int(skrocenie) + int(opoznienie))
-            przelot_koniec = int(przelot_start) + int(przelot_czas)
+            aos_start = int(transit.start) + int(delay)
+            aos_time = int(transit.duration()) - (int(short) + int(delay))
+            aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev:
-                return int(przelot_start), int(przelot_koniec), int(przelot_czas), int(transit.peak()['elevation'])
+                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
     elif satname in "METEOR-M 2":
         p = predict.transits(tle_meteor, qth)
         for i in range(1, 20):
             transit = p.next()
-            przelot_start = int(transit.start) + int(meteor_delay)
-            przelot_czas = int(transit.duration()) - (int(meteor_short) + int(meteor_delay))
-            przelot_koniec = int(przelot_start) + int(przelot_czas)
+            aos_start = int(transit.start) + int(meteor_delay)
+            aos_time = int(transit.duration()) - (int(meteor_short) + int(meteor_delay))
+            aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev_meteor:
-                return int(przelot_start), int(przelot_koniec), int(przelot_czas), int(transit.peak()['elevation'])
+                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
     else:
         print "NO TLE DEFINED FOR " + satname + " BAILING OUT"
