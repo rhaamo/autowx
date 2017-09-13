@@ -10,59 +10,14 @@ import os
 import re
 import sys
 import cfg
-from jinja2 import FileSystemLoader, Environment
-import csv
-import math
-from wand.image import Image
+import web
 
-THUMBNAILS_NOAA = {
-    "norm_thumb": (400, 354),
-    "norm_thumb_sm": (200, 177),
-    "enh_thumb": (400, 809),
-    "enh_thumb_sm": (300, 607)
-}
-
-configFile = 'autowx.ini'
-
-if len(sys.argv) > 2:
-    print("Usage: {} [autowx.ini]".format(sys.argv[0]))
-    exit(-1)
-elif len(sys.argv) == 2:
-    configFile = sys.argv[1]
-
-config = cfg.get(configFile)
 
 #############################
 #                          ##
 #     Here be dragons.     ##
 #                          ##
 #############################
-
-stationLonNeg = float(config.get('QTH', 'lon')) * -1
-tleFileDir = os.path.join(config.get('DIRS', 'tle'), config.get('DIRS', 'tleFile'))
-
-
-class AsciiColors:
-    def __init__(self):
-        pass
-
-    HEADER = '\033[95m'
-    CYAN = '\033[96m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[97m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    GRAY = '\033[37m'
-    UNDERLINE = '\033[4m'
-
-
-logLineStart = AsciiColors.BOLD + AsciiColors.HEADER + "***>\t" + AsciiColors.ENDC + AsciiColors.OKGREEN
-logLineEnd = AsciiColors.ENDC
-
 
 class Logger(object):
     def __init__(self, filename="Default.log"):
@@ -74,34 +29,10 @@ class Logger(object):
         self.log.write(message)
 
 
-def log_cmdline(what, cmdline):
-    if config.getboolean("LOG", 'debug'):
-        print logLineStart + what + ": '" + " ".join(cmdline) + "'" + logLineEnd
+def log_cmdline(what, cmdline, debug=False):
+    if debug:
+        print cfg.logLineStart + what + ": '" + " ".join(cmdline) + "'" + cfg.logLineEnd
         print cmdline
-
-
-pid = str(os.getpid())
-if os.path.isfile(config.get('LOG', 'pid')):
-    os.unlink(config.get('LOG', 'pid'))
-file(config.get('LOG', 'pid'), 'w').write(pid)
-
-if config.getboolean('LOG', 'enable'):
-    sys.stdout = Logger(config.get('LOG', 'filename'))
-
-if config.getboolean('PROCESSING', 'wxQuietOutput'):
-    wxQuietOpt = '-q'
-else:
-    wxQuietOpt = '-C wxQuiet:no'
-
-if config.getboolean('PROCESSING', 'wxDecodeAll'):
-    wxDecodeOpt = '-A'
-else:
-    wxDecodeOpt = '-C wxDecodeAll:no'
-
-if config.getboolean('PROCESSING', 'wxAddTextOverlay'):
-    wxAddText = "-k '" + config.get('PROCESSING', 'wxOverlayText') + "' %g %T/%E%p%^%z/e:%e %C"
-else:
-    wxAddText = '-C wxOther:noOverlay'
 
 
 # Execution loop declaration
@@ -116,9 +47,9 @@ def run_for_duration(cmdline, sleep_for):
 
 
 # FM Recorder definition
-def record_fm(frequency, filename, sleep_for, xf_filename):
-    print AsciiColors.GRAY
-    xf_no_space = xf_filename.replace(" ", "")
+def record_fm(config, frequency, filename, sleep_for, sat_name):
+    print cfg.AsciiColors.GRAY
+    xf_no_space = sat_name.replace(" ", "")
     output_file = os.path.join(config.get('DIRS', 'rec'), "{}-{}.raw".format(xf_no_space, filename))
 
     cmdline = ['/usr/bin/rtl_fm',
@@ -134,20 +65,20 @@ def record_fm(frequency, filename, sleep_for, xf_filename):
                '-p', config.get('SDR', 'shift'),
                output_file]
 
-    log_cmdline("RECORD FM", cmdline)
+    log_cmdline("RECORD FM", cmdline, config.getboolean("LOG", 'debug'))
 
     run_for_duration(cmdline, sleep_for)
 
 
-def record_qpsk(sleep_for):
-    print AsciiColors.GRAY
+def record_qpsk(config, cfg_file, sleep_for):
+    print cfg.AsciiColors.GRAY
     cmdline = [os.path.join(config.get('DIRS', 'system'), 'meteor_qpsk.py'),
-               configFile]
+               cfg_file]
     run_for_duration(cmdline, sleep_for)
 
 
 # Status builder. Crazy shit. These are only examples, do what you want :)
-def write_status(frequency, aos_time, los_time, los_time_unix, record_time, xf_name, max_elev, status):
+def write_status(config, frequency, aos_time, los_time, los_time_unix, record_time, xf_name, max_elev, status):
     aos_time_str = strftime('%H:%M:%S', time.localtime(aos_time))
     stat_file = open(config.get('DIRS', 'status'), 'w+')
     if status == 'RECORDING':
@@ -174,9 +105,9 @@ def write_status(frequency, aos_time, los_time, los_time_unix, record_time, xf_n
 
 
 # Transcoding module
-def transcode(filename):
-    xf_no_space = xfname.replace(" ", "")
-    print logLineStart + 'Transcoding...' + AsciiColors.YELLOW
+def transcode(config, filename, sat_name):
+    xf_no_space = sat_name.replace(" ", "")
+    print cfg.logLineStart + 'Transcoding...' + cfg.AsciiColors.YELLOW
     in_file = os.path.join(config.get('DIRS', 'rec'), "{}-{}.raw".format(xf_no_space, filename))
     out_file = os.path.join(config.get('DIRS', 'rec'), "{}-{}.wav".format(xf_no_space, filename))
 
@@ -192,7 +123,7 @@ def transcode(filename):
                   'rate',
                   config.get('SDR', 'wavrate')]
 
-    log_cmdline("SOX", cmdlinesox)
+    log_cmdline("SOX", cmdlinesox, config.getboolean("LOG", 'debug'))
 
     subprocess.call(cmdlinesox)
     cmdlinetouch = ['touch',
@@ -200,16 +131,16 @@ def transcode(filename):
                     in_file,
                     out_file]
 
-    log_cmdline('SOX TOUCH', cmdlinetouch)
+    log_cmdline('SOX TOUCH', cmdlinetouch, config.getboolean("LOG", 'debug'))
 
     subprocess.call(cmdlinetouch)
     if config.getboolean('PROCESSING', 'removeRAW'):
-        print logLineStart + AsciiColors.ENDC + AsciiColors.RED + 'Removing RAW data' + logLineEnd
+        print cfg.logLineStart + cfg.AsciiColors.ENDC + cfg.AsciiColors.RED + 'Removing RAW data' + cfg.logLineEnd
         os.remove(in_file)
 
 
-def create_overlay(filename, aos_time, sat_name, record_len):
-    print logLineStart + 'Creating Map Overlay...' + logLineEnd
+def create_overlay(config, filename, aos_time, sat_name, record_len):
+    print cfg.logLineStart + 'Creating Map Overlay...' + cfg.logLineEnd
     aos_time_o = int(aos_time) + int('1')
     rec_len_c = int(record_len)
     # recLenC='2'
@@ -226,7 +157,7 @@ def create_overlay(filename, aos_time, sat_name, record_len):
                str(aos_time_o), mapfname + '-map.png']
     overlay_log = open(mapfname + '-map.png.txt', "w+")
 
-    log_cmdline('CREATE OVRLAY WXMAP', cmdline)
+    log_cmdline('CREATE OVRLAY WXMAP', cmdline, config.getboolean("LOG", 'debug'))
 
     subprocess.call(cmdline, stderr=overlay_log, stdout=overlay_log)
     overlay_log.close()
@@ -235,17 +166,17 @@ def create_overlay(filename, aos_time, sat_name, record_len):
     thumb_dst = os.path.join(config.get('DIRS', 'map'), ".thumb_" + filename + "-map.png")
     thumb_dst_sm = os.path.join(config.get('DIRS', 'map'), ".thumb_sm_" + filename + "-map.png")
 
-    generate_thumbnail(mapfname + '-map.png', thumb_dst, THUMBNAILS_NOAA['enh_thumb'])
-    generate_thumbnail(mapfname + '-map.png', thumb_dst_sm, THUMBNAILS_NOAA['enh_thumb_sm'])
+    web.generate_thumbnail(mapfname + '-map.png', thumb_dst, cfg.THUMBNAILS_NOAA['enh_thumb'])
+    web.generate_thumbnail(mapfname + '-map.png', thumb_dst_sm, cfg.THUMBNAILS_NOAA['enh_thumb_sm'])
 
 
-def decode_qpsk():
+def decode_qpsk(config):
     # TODO write config for decode_meteor.sh
     subprocess.Popen(os.path.join(config.get('DIRS', 'system'), 'decode_meteor.sh'))
 
 
-def decode(filename, aos_time, sat_name, max_elev, record_len):
-    xf_no_space = xfname.replace(" ", "")
+def decode(config, filename, aos_time, sat_name, max_elev, record_len, wxtoimg_cfg):
+    xf_no_space = sat_name.replace(" ", "")
     sat_timestamp = int(filename)
     file_name_c = datetime.datetime.fromtimestamp(sat_timestamp).strftime('%Y%m%d-%H%M')
 
@@ -253,9 +184,9 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
     wxtoimg_bin = os.path.join(config.get('DIRS', 'wxInstall'), "wxtoimg")
 
     if config.getboolean('PROCESSING', 'wxAddOverlay'):
-        print logLineStart + AsciiColors.OKBLUE + 'Creating overlay map' + logLineEnd
-        create_overlay(filename, aos_time, sat_name, record_len)
-        print logLineStart + 'Creating basic image with overlay map' + logLineEnd
+        print cfg.logLineStart + cfg.AsciiColors.OKBLUE + 'Creating overlay map' + cfg.logLineEnd
+        create_overlay(config, filename, aos_time, sat_name, record_len)
+        print cfg.logLineStart + 'Creating basic image with overlay map' + cfg.logLineEnd
         img_txt = os.path.join(config.get('DIRS', 'img'), sat_name, "{}-normal-map.jpg.txt".format(file_name_c))
         map_txt = os.path.join(config.get('DIRS', 'map'), "{}-map.png.txt".format(filename))
         out_img = os.path.join(config.get('DIRS', 'img'), sat_name, "{}-normal-map.jpg".format(file_name_c))
@@ -272,14 +203,14 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
             m.write(res)
 
         cmdline = [config.get('DIRS', 'wxInstall') + '/wxtoimg',
-                   wxQuietOpt,
-                   wxAddText,
+                   wxtoimg_cfg['wxQuietOpt'],
+                   wxtoimg_cfg['wxAddText'],
                    '-A', '-o', '-R1',
                    '-t', 'NOAA',
                    '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'),
                    in_wav,
                    out_img]
-        log_cmdline("DECODE WXTOIMG NORMALMAP", cmdline)
+        log_cmdline("DECODE WXTOIMG NORMALMAP", cmdline, config.getboolean("LOG", 'debug'))
         subprocess.call(cmdline, stderr=m, stdout=m)
         m.close()
 
@@ -289,8 +220,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
         thumb_norm_dst_sm = os.path.join(config.get('DIRS', 'img'), sat_name,
                                          ".thumb_sm_{}-normal-map.jpg".format(file_name_c))
 
-        generate_thumbnail(out_img, thumb_norm_dst, THUMBNAILS_NOAA['norm_thumb'])
-        generate_thumbnail(out_img, thumb_norm_dst_sm, THUMBNAILS_NOAA['norm_thumb_sm'])
+        web.generate_thumbnail(out_img, thumb_norm_dst, cfg.THUMBNAILS_NOAA['norm_thumb'])
+        web.generate_thumbnail(out_img, thumb_norm_dst_sm, cfg.THUMBNAILS_NOAA['norm_thumb_sm'])
 
         # Maybe use a default better than None...
         channel_a, channel_b = None, None
@@ -298,7 +229,7 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
         for line in open(img_txt, "r").readlines():
             res = line.replace("\n", "")
             res2 = re.sub(r"(\d)", r"\033[96m\1\033[94m", res)
-            print logLineStart + AsciiColors.OKBLUE + res2 + logLineEnd
+            print cfg.logLineStart + cfg.AsciiColors.OKBLUE + res2 + cfg.logLineEnd
 
             if "Channel A" in res:
                 chan1 = res.rstrip().replace('(', ':').split(':')
@@ -309,29 +240,29 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
 
         # Copy logs
         if config.getboolean('SCP', 'log'):
-            print logLineStart + "Sending flight and decode logs..." + AsciiColors.YELLOW
+            print cfg.logLineStart + "Sending flight and decode logs..." + cfg.AsciiColors.YELLOW
             cmdline_scp_log = [config.get("SCP", "bin"),
                                img_txt,
                                config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':' +
                                scp_img_txt]
-            log_cmdline("SCP LOG", cmdline_scp_log)
+            log_cmdline("SCP LOG", cmdline_scp_log, config.getboolean("LOG", 'debug'))
             subprocess.call(cmdline_scp_log)
 
         if config.getboolean('SCP', 'img'):
-            print logLineStart + "Sending base image with map: " + AsciiColors.YELLOW
+            print cfg.logLineStart + "Sending base image with map: " + cfg.AsciiColors.YELLOW
             cmdline_scp_img = [config.get("SCP", "bin"),
                                out_img,
                                config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':' +
                                scp_img]
-            log_cmdline("SCP IMG", cmdline_scp_img)
+            log_cmdline("SCP IMG", cmdline_scp_img, config.getboolean("LOG", 'debug'))
             subprocess.call(cmdline_scp_img)
-            print logLineStart + "Sending OK, go on..." + logLineEnd
+            print cfg.logLineStart + "Sending OK, go on..." + cfg.logLineEnd
 
         # NEW
         if config.getboolean('PROCESSING', 'wxEnhCreate'):
             print "Channel A:" + channel_a + ", Channel B:" + channel_b
             for enhancements in config.getlist('PROCESSING', 'wxEnhList'):
-                print logLineStart + 'Creating ' + enhancements + ' enhancement image' + logLineEnd
+                print cfg.logLineStart + 'Creating ' + enhancements + ' enhancement image' + cfg.logLineEnd
                 enhancements_log_file = os.path.join(config.get('DIRS', 'img'),
                                                      sat_name,
                                                      "{}-{}-map.jpg.txt".format(file_name_c, enhancements))
@@ -355,8 +286,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                 if enhancements in ('HVCT', 'HVC'):
                     if channel_a in "1" and channel_b in "2":
                         print "1 i 2"
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-K0', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-K0', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -366,8 +297,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 enhancements_out_map]
                     elif channel_a in "1" and channel_b in "1":
                         print "1 i 1 "
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-K0', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-K0', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -377,8 +308,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 enhancements_out_map]
                     elif channel_a in "1" and channel_b in "4":
                         print "1 i 4 "
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-K0', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-K0', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -388,8 +319,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 enhancements_out_map]
                     elif channel_a in "1" and channel_b in "3":
                         print "1 i 3"
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-K3', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-K3', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -399,8 +330,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 enhancements_out_map]
                     elif channel_a in "2" and channel_b in "4":
                         print "2 i 4"
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-K1', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-K1', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -410,8 +341,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 enhancements_out_map]
                     elif channel_a in "3" and channel_b in "4":
                         print "3 i 4"
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-K4', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-K4', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -421,8 +352,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 enhancements_out_map]
                     else:
                         print "Channel Unknown"
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-K1', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-K1', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -430,10 +361,10 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 config.get('PROCESSING', 'wxOverlayOffsetY'),
                                                 in_wav,
                                                 enhancements_out_map]
-                if enhancements in ('MSA'):
+                if enhancements == 'MSA':
                     if channel_a in ("1", "2") and channel_b in "4":
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements,
                                                 '-m',
                                                 wxtoimg_map + ',' +
@@ -442,8 +373,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 in_wav,
                                                 enhancements_out_map]
                     else:
-                        cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                                wxAddText, '-A', '-o', '-c', '-R1',
+                        cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                                wxtoimg_cfg['wxAddText'], '-A', '-o', '-c', '-R1',
                                                 '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-eNO', '-m',
                                                 wxtoimg_map + ',' +
                                                 config.get('PROCESSING', 'wxOverlayOffsetX') + ',' +
@@ -451,15 +382,15 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 in_wav,
                                                 enhancements_out_map]
                 else:
-                    cmdline_enhancements = [wxtoimg_bin, wxQuietOpt, wxDecodeOpt,
-                                            wxAddText, '-A', '-o', '-c', '-R1',
+                    cmdline_enhancements = [wxtoimg_bin, wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'],
+                                            wxtoimg_cfg['wxAddText'], '-A', '-o', '-c', '-R1',
                                             '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'), '-e', enhancements, '-m',
                                             wxtoimg_map + ',' +
                                             config.get('PROCESSING', 'wxOverlayOffsetX') + ',' +
                                             config.get('PROCESSING', 'wxOverlayOffsetY'),
                                             in_wav,
                                             enhancements_out_map]
-                log_cmdline("ENHANCEMENTS WXTOIMG", cmdline_enhancements)
+                log_cmdline("ENHANCEMENTS WXTOIMG", cmdline_enhancements, config.getboolean("LOG", 'debug'))
                 subprocess.call(cmdline_enhancements, stderr=enhancements_log, stdout=enhancements_log)
 
                 # Generate thumbnails for enhancement map
@@ -470,8 +401,8 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                                 sat_name,
                                                 ".thumb_sm_{}-{}-map.jpg".format(file_name_c, enhancements))
 
-                generate_thumbnail(enhancements_out_map, thumb_enh_dst, THUMBNAILS_NOAA['enh_thumb'])
-                generate_thumbnail(enhancements_out_map, thumb_enh_dst_sm, THUMBNAILS_NOAA['enh_thumb_sm'])
+                web.generate_thumbnail(enhancements_out_map, thumb_enh_dst, cfg.THUMBNAILS_NOAA['enh_thumb'])
+                web.generate_thumbnail(enhancements_out_map, thumb_enh_dst_sm, cfg.THUMBNAILS_NOAA['enh_thumb_sm'])
 
                 for psikus in open(map_txt, "r").readlines():
                     res = psikus.replace("\n", " \n")
@@ -479,24 +410,26 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                 enhancements_log.close()
 
                 if config.getboolean('SCP', 'log'):
-                    print logLineStart + "Sending " + enhancements + " flight and decode logs..." + AsciiColors.YELLOW
+                    print cfg.logLineStart + "Sending " + enhancements + " flight and decode logs..." + \
+                          cfg.AsciiColors.YELLOW
                     cmdline_scp_log = [config.get("SCP", "bin"),
                                        enhancements_log_file,
                                        config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':' +
                                        scp_img_txt_enh]
-                    log_cmdline("SCP LOG", cmdline_scp_log)
+                    log_cmdline("SCP LOG", cmdline_scp_log, config.getboolean("LOG", 'debug'))
                     subprocess.call(cmdline_scp_log)
-                    print logLineStart + "Sending logs OK, moving on..." + logLineEnd
+                    print cfg.logLineStart + "Sending logs OK, moving on..." + cfg.logLineEnd
 
                 if config.getboolean('SCP', 'img'):
-                    print logLineStart + "Sending " + enhancements + " image with overlay map... " + AsciiColors.YELLOW
+                    print cfg.logLineStart + "Sending " + enhancements + " image with overlay map... " + \
+                          cfg.AsciiColors.YELLOW
                     cmdline_scp_img = [config.get("SCP", "bin"),
                                        enhancements_out_map,
                                        config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':' +
                                        scp_img_enh]
-                    log_cmdline("SCP IMG", cmdline_scp_img)
+                    log_cmdline("SCP IMG", cmdline_scp_img, config.getboolean("LOG", 'debug'))
                     subprocess.call(cmdline_scp_img)
-                    print logLineStart + "Send image OK, moving on..." + logLineEnd
+                    print cfg.logLineStart + "Send image OK, moving on..." + cfg.logLineEnd
 
         # SFPG
         if config.getboolean('SCP', 'sfpgLink'):
@@ -506,7 +439,7 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                 os.unlink(path_plik2)
             os.symlink(path_plik, path_plik2)
     else:  # No overlays wanted
-        print logLineStart + 'Creating basic image without map' + logLineEnd
+        print cfg.logLineStart + 'Creating basic image without map' + cfg.logLineEnd
 
         img_txt = os.path.join(config.get('DIRS', 'img'), sat_name, "{}-normal.jpg.txt".format(file_name_c))
         out_img = os.path.join(config.get('DIRS', 'img'), sat_name, "{}-normal.jpg".format(file_name_c))
@@ -517,13 +450,13 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
 
         r = open(img_txt, "w+")
         cmdline = [wxtoimg_bin,
-                   wxQuietOpt, wxDecodeOpt, wxAddText,
+                   wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'], wxtoimg_cfg['wxAddText'],
                    '-o', '-R1',
                    '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'),
                    '-t', 'NOAA',
                    in_wav,
                    out_img]
-        log_cmdline("WXTOIMG", cmdline)
+        log_cmdline("WXTOIMG", cmdline, config.getboolean("LOG", 'debug'))
         r.write('\nSAT: ' + str(xf_no_space) + ', Elevation max: ' + str(max_elev) + ', Date: ' + str(filename) + '\n')
         subprocess.call(cmdline, stderr=r, stdout=r)
         r.close()
@@ -532,28 +465,28 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                          "r").readlines():
             res = line.replace("\n", "")
             res2 = re.sub(r"(\d)", r"\033[96m\1\033[94m", res)
-            print logLineStart + AsciiColors.OKBLUE + res2 + logLineEnd
+            print cfg.logLineStart + cfg.AsciiColors.OKBLUE + res2 + cfg.logLineEnd
 
         if config.getboolean('SCP', 'log'):
-            print logLineStart + "Sending flight and decode logs..." + AsciiColors.YELLOW
+            print cfg.logLineStart + "Sending flight and decode logs..." + cfg.AsciiColors.YELLOW
             cmdline_scp_log = [config.get("SCP", "bin"),
                                img_txt,
                                config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':' + scp_img_txt]
-            log_cmdline("SCP LOG", cmdline_scp_log)
+            log_cmdline("SCP LOG", cmdline_scp_log, config.getboolean("LOG", 'debug'))
             subprocess.call(cmdline_scp_log)
 
         if config.getboolean('SCP', 'img'):
-            print logLineStart + "Sending base image with map: " + AsciiColors.YELLOW
+            print cfg.logLineStart + "Sending base image with map: " + cfg.AsciiColors.YELLOW
             cmdline_scp_img = [config.get("SCP", "bin"),
                                out_img,
                                config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':' + scp_img]
-            log_cmdline("SCP IMG", cmdline_scp_img)
+            log_cmdline("SCP IMG", cmdline_scp_img, config.getboolean("LOG", 'debug'))
             subprocess.call(cmdline_scp_img)
-            print logLineStart + "Sending OK, go on..." + logLineEnd
+            print cfg.logLineStart + "Sending OK, go on..." + cfg.logLineEnd
 
         if config.getboolean('PROCESSING', 'wxEnhCreate'):
             for enhancements in config.getlist('PROCESSING', 'wxEnhList'):
-                print logLineStart + 'Creating ' + enhancements + ' image' + logLineEnd
+                print cfg.logLineStart + 'Creating ' + enhancements + ' image' + cfg.logLineEnd
 
                 enhancements_log_file = os.path.join(config.get('DIRS', 'img'),
                                                      sat_name,
@@ -575,34 +508,36 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
                                            "{}-{}-nomap.jpg".format(file_name_c, enhancements))
 
                 cmdline_enhancements = [wxtoimg_bin,
-                                        wxQuietOpt, wxDecodeOpt, wxAddText,
+                                        wxtoimg_cfg['wxQuietOpt'], wxtoimg_cfg['wxDecodeOpt'], wxtoimg_cfg['wxAddText'],
                                         '-o', '-K', '-R1',
                                         '-Q ' + config.get('PROCESSING', 'wxJPEGQuality'),
                                         '-e', enhancements,
                                         in_wav,
                                         enhancements_out_map]
-                log_cmdline("WXTOIMG ENHANCEMENTS", cmdline_enhancements)
+                log_cmdline("WXTOIMG ENHANCEMENTS", cmdline_enhancements, config.getboolean("LOG", 'debug'))
                 subprocess.call(cmdline_enhancements, stderr=enhancements_log, stdout=enhancements_log)
                 enhancements_log.close()
 
                 if config.getboolean('SCP', 'log'):
-                    print logLineStart + "Sending " + enhancements + " flight and decode logs..." + AsciiColors.YELLOW
+                    print cfg.logLineStart + "Sending " + enhancements + " flight and decode logs..." + \
+                          cfg.AsciiColors.YELLOW
                     cmdline_scp_log = [config.get("SCP", "bin"),
                                        enhancements_log_file,
                                        config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':'
                                        + scp_img_txt_enh]
-                    log_cmdline("SCP LOG", cmdline_scp_log)
+                    log_cmdline("SCP LOG", cmdline_scp_log, config.getboolean("LOG", 'debug'))
                     subprocess.call(cmdline_scp_log)
 
                 if config.getboolean('SCP', 'img'):
-                    print logLineStart + "Sending " + enhancements + " image with overlay map... " + AsciiColors.YELLOW
+                    print cfg.logLineStart + "Sending " + enhancements + " image with overlay map... " + \
+                          cfg.AsciiColors.YELLOW
                     cmdline_scp_img = [config.get("SCP", "bin"),
                                        enhancements_out_map,
                                        config.get('SCP', 'user') + '@' + config.get('SCP', 'host') + ':'
                                        + scp_img_enh]
-                    log_cmdline("SCP IMG", cmdline_scp_img)
+                    log_cmdline("SCP IMG", cmdline_scp_img, config.getboolean("LOG", 'debug'))
                     subprocess.call(cmdline_scp_img)
-                    print logLineStart + "Sending OK, moving on" + logLineEnd
+                    print cfg.logLineStart + "Sending OK, moving on" + cfg.logLineEnd
 
         if config.getboolean('SCP', 'sfpgLink'):
             path_plik = os.path.join(config.get('DIRS', 'img'), sat_name,
@@ -614,211 +549,27 @@ def decode(filename, aos_time, sat_name, max_elev, record_len):
 
 
 # Record and transcode wave file
-def record_wav(frequency, filename, sleep_for, xfilename):
-    record_fm(frequency, filename, sleep_for, xfilename)
-    transcode(filename)
+def record_wav(config, frequency, filename, sleep_for, sat_name):
+    record_fm(config, frequency, filename, sleep_for, sat_name)
+    transcode(config, filename, sat_name)
     if config.getboolean('PROCESSING', 'createSpectro'):
-        spectrum(filename)
+        spectrum(config, filename, sat_name)
 
 
-def spectrum(xfilename):
-    xf_no_space = xfname.replace(" ", "")
-    print logLineStart + 'Creating flight spectrum' + logLineEnd
+def spectrum(config, xfilename, sat_name):
+    xf_no_space = sat_name.replace(" ", "")
+    print cfg.logLineStart + 'Creating flight spectrum' + cfg.logLineEnd
     cmdline = ['sox',
                os.path.join(config.get('DIRS', 'rec'), "{}-{}.wav".format(xf_no_space, xfilename)),
                '-n', 'spectrogram',
                '-o', os.path.join(config.get('DIRS', 'spec'), "{}-{}.png".format(xf_no_space, xfilename))]
-    log_cmdline("SOX SPECTRUM", cmdline)
+    log_cmdline("SOX SPECTRUM", cmdline, config.getboolean("LOG", 'debug'))
     subprocess.call(cmdline)
 
 
-def add_csv_record(sat_name, automate_started, aos_time, los_time, max_elev, record_time):
-    header = False
-    args = 'a'
+def find_next_pass(config):
+    tle_file = os.path.join(config.get('DIRS', 'tle'), config.get('DIRS', 'tleFile'))
 
-    if not os.path.isfile(config.get('DIRS', 'passesCSV')):
-        header = True
-        args = 'w'
-
-    with open(config.get('DIRS', 'passesCSV'), args) as f:
-        fields = ['sat_name', 'automate_started', 'aos_time', 'los_time', 'max_elev', 'record_time']
-        writer = csv.DictWriter(f, fieldnames=fields)
-
-        if header:
-            writer.writeheader()
-
-        writer.writerow({'sat_name': sat_name,
-                         'automate_started': automate_started,
-                         'aos_time': aos_time,
-                         'los_time': los_time,
-                         'max_elev': max_elev,
-                         'record_time': round(record_time)
-                         })
-
-
-def format_datetime(date, utc=False, fmt=None):
-    if type(date) == str:
-        date = float(date)
-
-    if not fmt:
-        fmt = '%Y-%m-%d %H:%M:%S'
-
-    if utc:
-        return datetime.datetime.utcfromtimestamp(date).strftime(fmt)
-
-    return datetime.datetime.fromtimestamp(date).strftime(fmt)
-
-
-def generate_thumbnail(src, dst, size):
-    if not os.path.isfile(src):
-        print logLineStart + "Issue generating thumbnail, file not found: {}".format(src) + logLineEnd
-        return
-
-    with Image(filename=src) as f:
-        f.resize(size[0], size[1])
-        f.save(filename=dst)
-
-    print logLineStart + "Generated thumbnail {}x{}: {}".format(size[0], size[1], dst) + logLineEnd
-
-
-def sat_type(sat_name):
-    if 'NOAA' in sat_name:
-        return 'NOAA'
-    elif 'METEOR' in sat_name:
-        return 'METEOR'
-    else:
-        return 'OTHER'
-
-
-# Meteor is currently not managed
-def generate_static_web(sat_name, automate_started, aos_time, los_time, max_elev, record_time):
-    if not config.getboolean("PROCESSING", "staticWeb"):
-        return
-
-    cur_path = os.path.dirname(os.path.abspath(__file__))
-    template_env = Environment(
-        autoescape=False,
-        loader=FileSystemLoader(os.path.join(cur_path, 'templates')),
-        trim_blocks=False)
-    template_env.filters['datetime'] = format_datetime
-
-    def render_template(template, context):
-        return template_env.get_template(template).render(context)
-
-    emerge_time_utc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
-
-    if not os.path.exists(config.get("DIRS", "staticWeb")):
-        print logLineStart + "PATH for static web doesn't exist, can't generate web pages" + logLineEnd
-        return
-
-    # Generate the web page of the pass itself
-
-    # time is UTC
-    dst_single_pass = os.path.join(
-        config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc.replace(":", "-")))
-
-    # timestamp - local time
-    img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
-    with open(dst_single_pass, 'w') as f:
-        ctx = {
-            'sat_name': sat_name,
-            'aos_time': aos_time,  # localtime
-            'los_time': los_time,  # localtime
-            'automate_started': automate_started,  # UTC (from time.time())
-            'max_el': max_elev,
-            'record_time': record_time,
-            'img_tstamp': img_tstamp,
-            'sat_type': sat_type(sat_name),
-        }
-
-        if config.getboolean('PROCESSING', 'wxEnhCreate'):
-            ctx['enhancements'] = []
-            for enhancement in config.getlist('PROCESSING', 'wxEnhList'):
-                filename = "{}-{}-map.jpg".format(img_tstamp, enhancement)
-                ctx['enhancements'].append({
-                    'name': enhancement,
-                    'img_path': filename,
-                    'img_full_path': os.path.join("/img_noaa", sat_name, filename),
-                    'log': "{}.txt".format(os.path.join("/img_noaa", sat_name, filename)),
-                })
-
-        if config.getboolean('PROCESSING', 'createSpectro'):
-            filename = "{}-{}.png".format(sat_name.replace(" ", ""), str(aos_time))
-            ctx['spectro'] = {
-                'filename': os.path.join("/spectro_noaa", filename)
-            }
-
-        html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
-        f.write(html)
-        print logLineStart + "Wrote web page for single NOAA pass" + logLineEnd
-
-    # Generate the home page of the passes
-    # The CSV is filled even if no static web generation is activated
-    # Cycle over the CSV, regenerating home plus every pages splitted on config.passes_per_page
-
-    passes = []
-
-    with open(config.get('DIRS', 'passesCSV'), 'rb') as f:
-        csv_reader = csv.DictReader(f)
-        for row in csv_reader:
-            r = row
-            r['sat_type'] = sat_type(sat_name)
-            passes.append(r)
-
-    passes = list(reversed(passes))  # reverse the list, latest first
-
-    # (re)generate the home page
-    passes_per_pages = config.getint('STATIC_WEB', 'passes_per_page')
-
-    page = 0
-    pages = int(math.ceil(float(len(passes)) / float(passes_per_pages)))
-    home_passes = passes[0:passes_per_pages]
-
-    index_page = os.path.join(
-        config.get("DIRS", "staticWeb"), "index.html")
-    with open(index_page, 'w') as f:
-        ctx = {
-            'passes': home_passes,
-            'passes_per_pages': passes_per_pages,
-            'start': 0,
-            'total': len(passes),
-            'page': page,
-            'pages': pages,
-            'pages_list': range(0, pages),
-        }
-        html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
-        f.write(html)
-        page = 1  # index created, increment page
-        print logLineStart + "Wrote web page for index passes, page 0 0-{}".format(passes_per_pages) + logLineEnd
-
-    if len(passes) > passes_per_pages:
-        # We have more pages to show
-        for p in range(1, pages):
-            start_passes = (page * passes_per_pages)
-            page_passes = passes[start_passes:start_passes + passes_per_pages]
-            passes_page = os.path.join(config.get("DIRS", "staticWeb"), "index_{}.html".format(page))
-
-            with open(passes_page, 'w') as f:
-                ctx = {
-                    'passes': page_passes,
-                    'passes_per_pages': passes_per_pages,
-                    'start': start_passes,
-                    'total': len(passes),
-                    'page': page,
-                    'pages': pages,
-                    'pages_list': range(0, pages),
-                }
-                html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
-                f.write(html)
-                print logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
-                    page, start_passes, start_passes + passes_per_pages
-                ) + logLineEnd
-            page = page + 1  # page created, increment
-
-    print logLineStart + "Finished web page processing" + logLineEnd
-
-
-def find_next_pass():
     predictions = [
         pypredict.aoslos(s,
                          config.get('QTH', 'minElev'),
@@ -826,7 +577,7 @@ def find_next_pass():
                          config.get('QTH', 'lat'),
                          config.get('QTH', 'lon'),
                          config.get('QTH', 'alt'),
-                         tleFileDir) for s in
+                         tle_file) for s in
         config.getlist('BIRDS', 'satellites')]
     aoses = [p[0] for p in predictions]
     next_index = aoses.index(min(aoses))
@@ -836,70 +587,99 @@ def find_next_pass():
 
 
 # Now magic
-while True:
-    (satName, freq, (aosTime, losTime, duration, maxElev)) = find_next_pass()
-    now = time.time()
-    towait = aosTime - now
+def auto_sat_magic(config, cfg_file):
+    # PID management
+    pid = str(os.getpid())
+    if os.path.isfile(config.get('LOG', 'pid')):
+        os.unlink(config.get('LOG', 'pid'))
+    file(config.get('LOG', 'pid'), 'w').write(pid)
 
-    aosTimeCnv = strftime('%H:%M:%S', time.localtime(aosTime))
-    emergeTimeUtc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aosTime))
-    losTimeCnv = strftime('%H:%M:%S', time.localtime(losTime))
-    dimTimeUtc = strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(losTime))
+    # Log config
+    if config.getboolean('LOG', 'enable'):
+        sys.stdout = Logger(config.get('LOG', 'filename'))
 
-    # OK, now we have to decide what if recording or sleeping
-    if towait > 0:
-        print logLineStart + "waiting " + AsciiColors.CYAN + str(towait).split(".")[
-            0] + AsciiColors.OKGREEN + " seconds  (" + AsciiColors.CYAN + aosTimeCnv + AsciiColors.OKGREEN + " to " + \
-              AsciiColors.CYAN + losTimeCnv + ", " + str(
-            duration) + AsciiColors.OKGREEN + "s.) for " + AsciiColors.YELLOW + satName + AsciiColors.OKGREEN + \
-              " @ " + AsciiColors.CYAN + str(maxElev) + AsciiColors.OKGREEN + "\xb0 el. " + logLineEnd
-        write_status(freq, aosTime, losTimeCnv, aosTime, towait, satName, maxElev, 'WAITING')
-        time.sleep(towait)
-
-    if aosTime < now:
-        recordTime = losTime - now
-        if recordTime < 1:
-            recordTime = 1
-    elif aosTime >= now:
-        recordTime = duration
-        if recordTime < 1:
-            recordTime = 1
-
-    fname = str(aosTime)
-    xfname = satName
-    print logLineStart + "Beginning pass of " + AsciiColors.YELLOW + satName + AsciiColors.OKGREEN + " at " + \
-          AsciiColors.CYAN + str(maxElev) + "\xb0" + AsciiColors.OKGREEN + " elev.\n" + logLineStart + \
-          "Predicted start " + AsciiColors.CYAN + aosTimeCnv + AsciiColors.OKGREEN + " and end " + AsciiColors.CYAN + \
-          losTimeCnv + AsciiColors.OKGREEN + ".\n" + logLineStart + "Will record for " + AsciiColors.CYAN + \
-          str(recordTime).split(".")[0] + AsciiColors.OKGREEN + " seconds." + logLineEnd
-    write_status(freq, aosTime, losTimeCnv, str(losTime), str(recordTime).split(".")[0], satName, maxElev, 'RECORDING')
-
-    if xfname in ('NOAA 15', 'NOAA 19', 'NOAA 18'):
-        record_wav(freq, fname, recordTime, xfname)
-    elif xfname == 'METEOR-M 2':
-        if config.getboolean("PROCESSING", "recordMeteor"):
-            record_qpsk(recordTime)
-    print logLineStart + "Decoding data" + logLineEnd
-    if xfname in ('NOAA 15', 'NOAA 19', 'NOAA 18'):
-        write_status(freq, aosTime, losTimeCnv, str(losTime), str(recordTime).split(".")[0], satName, maxElev,
-                     'DECODING')
-        decode(fname, aosTime, satName, maxElev, recordTime)  # make picture
-    elif xfname == 'METEOR-M 2':
-        if config.getboolean('PROCESSING', 'decodeMeteor'):
-            print "This may take a loooong time and is resource hungry!!!"
-            write_status(freq, aosTime, losTimeCnv, str(losTime), str(recordTime).split(".")[0], satName, maxElev,
-                         'DECODING')
-            decode_qpsk()
-
-    # No METEOR currently managed
-    # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
-    if 'NOAA' in satName:
-        add_csv_record(satName, now, aosTime, losTime, maxElev, recordTime)
-        generate_static_web(satName, now, aosTime, losTime, maxElev, recordTime)
+    # wxtoimg command line building
+    wxtoimg_cfg = {}
+    if config.getboolean('PROCESSING', 'wxQuietOutput'):
+        wxtoimg_cfg['wxQuietOpt'] = '-q'
     else:
-        print "METEOR currently not managed for static webpages generation"
+        wxtoimg_cfg['wxQuietOpt'] = '-C wxQuiet:no'
 
-    print logLineStart + "Finished pass of " + AsciiColors.YELLOW + satName + AsciiColors.OKGREEN + " at " + \
-          AsciiColors.CYAN + losTimeCnv + AsciiColors.OKGREEN + ". Sleeping for" + AsciiColors.CYAN + " 10" + \
-          AsciiColors.OKGREEN + " seconds" + logLineEnd
-    time.sleep(10.0)
+    if config.getboolean('PROCESSING', 'wxDecodeAll'):
+        wxtoimg_cfg['wxDecodeOpt'] = '-A'
+    else:
+        wxtoimg_cfg['wxDecodeOpt'] = '-C wxDecodeAll:no'
+
+    if config.getboolean('PROCESSING', 'wxAddTextOverlay'):
+        wxtoimg_cfg['wxAddText'] = "-k '" + config.get('PROCESSING', 'wxOverlayText') + "' %g %T/%E%p%^%z/e:%e %C"
+    else:
+        wxtoimg_cfg['wxAddText'] = '-C wxOther:noOverlay'
+
+    # The real magic starts here
+    while True:
+        (satName, freq, (aosTime, losTime, duration, maxElev)) = find_next_pass(config)
+        now = time.time()
+        towait = aosTime - now
+
+        aos_time_cnv = strftime('%H:%M:%S', time.localtime(aosTime))
+        los_time_cnv = strftime('%H:%M:%S', time.localtime(losTime))
+
+        # OK, now we have to decide what if recording or sleeping
+        if towait > 0:
+            print cfg.logLineStart + "waiting " + cfg.AsciiColors.CYAN + str(towait).split(".")[
+                0] + cfg.AsciiColors.OKGREEN + " seconds  (" + cfg.AsciiColors.CYAN + aos_time_cnv + \
+                  cfg.AsciiColors.OKGREEN + " to " + cfg.AsciiColors.CYAN + los_time_cnv + ", " + str(
+                duration) + cfg.AsciiColors.OKGREEN + "s.) for " + cfg.AsciiColors.YELLOW + satName + \
+                  cfg.AsciiColors.OKGREEN + " @ " + cfg.AsciiColors.CYAN + str(maxElev) + cfg.AsciiColors.OKGREEN + \
+                  "\xb0 el. " + cfg.logLineEnd
+            write_status(config, freq, aosTime, los_time_cnv, aosTime, towait, satName, maxElev, 'WAITING')
+            time.sleep(towait)
+
+        if aosTime < now:
+            record_time = losTime - now
+            if record_time < 1:
+                record_time = 1
+        elif aosTime >= now:
+            record_time = duration
+            if record_time < 1:
+                record_time = 1
+
+        fname = str(aosTime)
+        print cfg.logLineStart + "Beginning pass of " + cfg.AsciiColors.YELLOW + satName + cfg.AsciiColors.OKGREEN + \
+              " at " + cfg.AsciiColors.CYAN + str(maxElev) + "\xb0" + cfg.AsciiColors.OKGREEN + " elev.\n" + \
+              cfg.logLineStart + "Predicted start " + cfg.AsciiColors.CYAN + aos_time_cnv + cfg.AsciiColors.OKGREEN + \
+              " and end " + cfg.AsciiColors.CYAN + los_time_cnv + cfg.AsciiColors.OKGREEN + ".\n" + cfg.logLineStart + \
+              "Will record for " + cfg.AsciiColors.CYAN + \
+              str(record_time).split(".")[0] + cfg.AsciiColors.OKGREEN + " seconds." + cfg.logLineEnd
+        write_status(config, freq, aosTime, los_time_cnv, str(losTime), str(record_time).split(".")[0],
+                     satName, maxElev, 'RECORDING')
+
+        if satName in ('NOAA 15', 'NOAA 19', 'NOAA 18'):
+            record_wav(config, freq, fname, record_time, satName)
+        elif satName == 'METEOR-M 2':
+            if config.getboolean("PROCESSING", "recordMeteor"):
+                record_qpsk(config, cfg_file, record_time)
+        print cfg.logLineStart + "Decoding data" + cfg.logLineEnd
+        if satName in ('NOAA 15', 'NOAA 19', 'NOAA 18'):
+            write_status(config, freq, aosTime, los_time_cnv, str(losTime), str(record_time).split(".")[0], satName,
+                         maxElev, 'DECODING')
+            decode(config, fname, aosTime, satName, maxElev, record_time, wxtoimg_cfg)  # make picture
+        elif satName == 'METEOR-M 2':
+            if config.getboolean('PROCESSING', 'decodeMeteor'):
+                print "This may take a loooong time and is resource hungry!!!"
+                write_status(config, freq, aosTime, los_time_cnv, str(losTime), str(record_time).split(".")[0], satName,
+                             maxElev, 'DECODING')
+                decode_qpsk(config)
+
+        # No METEOR currently managed
+        # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
+        if 'NOAA' in satName:
+            web.add_csv_record(config, satName, now, aosTime, losTime, maxElev, record_time)
+            web.generate_static_web(config, satName, now, aosTime, losTime, maxElev, record_time)
+        else:
+            print "METEOR currently not managed for static webpages generation"
+
+        print cfg.logLineStart + "Finished pass of " + cfg.AsciiColors.YELLOW + satName + cfg.AsciiColors.OKGREEN + \
+              " at " + cfg.AsciiColors.CYAN + los_time_cnv + cfg.AsciiColors.OKGREEN + ". Sleeping for" + \
+              cfg.AsciiColors.CYAN + " 10" + cfg.AsciiColors.OKGREEN + " seconds" + cfg.logLineEnd
+        time.sleep(10.0)

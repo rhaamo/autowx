@@ -20,6 +20,7 @@ Options:
 from docopt import docopt
 import cfg
 import keps
+import noaa
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='AutoWX 1.0')
@@ -29,3 +30,10 @@ if __name__ == '__main__':
 
     if arguments['update-keps']:
         keps.update_keps(config, arguments['--force'])
+    elif arguments['auto']:
+        if arguments['--force-keps-update']:
+            keps.update_keps(config, force=True)
+
+        noaa.auto_sat_magic(config, arguments['--config'])
+    elif arguments['web']:
+        pass
