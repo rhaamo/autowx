@@ -21,6 +21,7 @@ from docopt import docopt
 import cfg
 import keps
 import noaa
+import web
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='AutoWX 1.0')
@@ -36,4 +37,4 @@ if __name__ == '__main__':
 
         noaa.auto_sat_magic(config, arguments['--config'])
     elif arguments['web']:
-        pass
+        web.static_web_generation(config)

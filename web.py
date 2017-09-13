@@ -59,6 +59,16 @@ def sat_type(sat_name):
         return 'OTHER'
 
 
+def static_web_generation(config):
+    engine = models.create_engine(config)
+    session = models.get_session(engine)
+
+    # Latest first
+    passes = session.query(models.Passes).order_by(models.Passes.aos_time.asc())
+
+    print passes
+    
+
 # Meteor is currently not managed
 def generate_static_web(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
     if not config.getboolean("PROCESSING", "staticWeb"):
