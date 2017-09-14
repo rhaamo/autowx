@@ -11,7 +11,8 @@ import models
 
 def add_db_record(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
     engine = models.init(config)
-    session = models.get_session(engine)
+    session_maker = models.get_session(engine)
+    session = session_maker()
 
     sat_pass = models.Passes()
     sat_pass.sat_name = sat_name
