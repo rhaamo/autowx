@@ -25,7 +25,6 @@ import web
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='AutoWX 1.0')
-    print(arguments)
 
     config = cfg.get(arguments['--config'])
 
