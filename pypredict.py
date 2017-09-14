@@ -51,7 +51,8 @@ def aoslos(satname, min_elev, min_elev_meteor, station_lat, station_lon, station
             aos_time = int(transit.duration()) - (int(short) + int(delay))
             aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev:
-                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
+                return int(aos_start), int(aos_end), int(aos_time), \
+                       int(transit.peak()['elevation']), transit, tle_noaa15
     elif satname in "NOAA 18":
         p = predict.transits(tle_noaa18, qth)
         for i in range(1, 20):
@@ -60,7 +61,8 @@ def aoslos(satname, min_elev, min_elev_meteor, station_lat, station_lon, station
             aos_time = int(transit.duration()) - (int(short) + int(delay))
             aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev:
-                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
+                return int(aos_start), int(aos_end), int(aos_time), \
+                       int(transit.peak()['elevation']), transit, tle_noaa18
     elif satname in "NOAA 19":
         p = predict.transits(tle_noaa19, qth)
         for i in range(1, 20):
@@ -69,7 +71,8 @@ def aoslos(satname, min_elev, min_elev_meteor, station_lat, station_lon, station
             aos_time = int(transit.duration()) - (int(short) + int(delay))
             aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev:
-                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
+                return int(aos_start), int(aos_end), int(aos_time), \
+                       int(transit.peak()['elevation']), transit, tle_noaa19
     elif satname in "METEOR-M 2":
         p = predict.transits(tle_meteor, qth)
         for i in range(1, 20):
@@ -78,6 +81,7 @@ def aoslos(satname, min_elev, min_elev_meteor, station_lat, station_lon, station
             aos_time = int(transit.duration()) - (int(meteor_short) + int(meteor_delay))
             aos_end = int(aos_start) + int(aos_time)
             if int(transit.peak()['elevation']) >= min_elev_meteor:
-                return int(aos_start), int(aos_end), int(aos_time), int(transit.peak()['elevation']), transit
+                return int(aos_start), int(aos_end), int(aos_time), \
+                       int(transit.peak()['elevation']), transit, tle_meteor
     else:
         print "NO TLE DEFINED FOR " + satname + " BAILING OUT"

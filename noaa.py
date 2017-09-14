@@ -618,7 +618,7 @@ def auto_sat_magic(config, cfg_file):
 
     # The real magic starts here
     while True:
-        (satName, freq, (aosTime, losTime, duration, maxElev, pass_transit)) = find_next_pass(config)
+        (satName, freq, (aosTime, losTime, duration, maxElev, pass_transit, tle_sat)) = find_next_pass(config)
         now = time.time()
         towait = aosTime - now
 
@@ -672,7 +672,7 @@ def auto_sat_magic(config, cfg_file):
                              maxElev, 'DECODING')
                 decode_qpsk(config)
 
-        tle_draw.generate_pass_trace(config, pass_transit, satName, fname)
+        tle_draw.generate_pass_trace(config, pass_transit, tle_sat, satName, fname)
 
         # No METEOR currently managed
         # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing

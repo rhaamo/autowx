@@ -10,7 +10,7 @@ import os
 import datetime
 
 
-def generate_pass_trace(config, transit, sat_name, sat_timestamp):
+def generate_pass_trace(config, transit, tle_sat, sat_name, sat_timestamp):
     # Config
     qth = (config.getfloat('QTH', 'lat'), config.getfloat('QTH', 'lon'), config.getint('QTH', 'alt'))
 
@@ -22,7 +22,7 @@ def generate_pass_trace(config, transit, sat_name, sat_timestamp):
     font = {'color': '#212121', 'size': 8, }
     font2 = {'color': '#00796B', 'size': 12, }
 
-    f = predict.quick_predict(sat_name, transit.start, qth)
+    f = predict.quick_predict(tle_sat, transit.start, qth)
     predict_xp = []
     predict_yp = []
     predict_time = []
