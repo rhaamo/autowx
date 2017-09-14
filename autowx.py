@@ -28,6 +28,8 @@ if __name__ == '__main__':
 
     config = cfg.get(arguments['--config'])
 
+    print "Using config file: {}".format(arguments['--config'])
+
     if arguments['update-keps']:
         keps.update_keps(config, arguments['--force'])
     elif arguments['auto']:
