@@ -10,7 +10,7 @@ import models
 
 
 def add_db_record(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
-    engine = models.create_engine(config)
+    engine = models.init(config)
     session = models.get_session(engine)
 
     sat_pass = models.Passes()
@@ -60,7 +60,7 @@ def sat_type(sat_name):
 
 
 def static_web_generation(config):
-    engine = models.create_engine(config)
+    engine = models.init(config)
     session = models.get_session(engine)
 
     # Latest first
@@ -74,7 +74,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
     if not config.getboolean("PROCESSING", "staticWeb"):
         return
 
-    engine = models.create_engine(config)
+    engine = models.init(config)
     session = models.get_session(engine)
 
     cur_path = os.path.dirname(os.path.abspath(__file__))
