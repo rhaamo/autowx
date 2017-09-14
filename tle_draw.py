@@ -3,12 +3,12 @@ import predict
 import time
 from time import strftime
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import datetime
 
-matplotlib.use('Agg')
 
 
 def generate_pass_trace(config, transit, sat_name, sat_timestamp):
