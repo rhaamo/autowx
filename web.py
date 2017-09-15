@@ -147,7 +147,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
     passes_per_pages = config.getint('STATIC_WEB', 'passes_per_page')
 
     page = 0
-    pages = int(math.ceil(float(len(passes)) / float(passes_per_pages)))
+    pages = int(math.ceil(float(passes.count()) / float(passes_per_pages)))
     home_passes = passes[0:passes_per_pages]
 
     index_page = os.path.join(
@@ -169,7 +169,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
               "Wrote web page for index passes, page 0 0-{}".format(passes_per_pages) + \
               cfg.logLineEnd
 
-    if len(passes) > passes_per_pages:
+    if passes.count() > passes_per_pages:
         # We have more pages to show
         for p in range(1, pages):
             start_passes = (page * passes_per_pages)
@@ -181,7 +181,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
                     'passes': page_passes,
                     'passes_per_pages': passes_per_pages,
                     'start': start_passes,
-                    'total': len(passes),
+                    'total': passes.count(),
                     'page': page,
                     'pages': pages,
                     'pages_list': range(0, pages),
