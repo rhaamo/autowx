@@ -16,9 +16,9 @@ def add_db_record(config, sat_name, automate_started, aos_time, los_time, max_el
 
     sat_pass = models.Passes()
     sat_pass.sat_name = sat_name
-    sat_pass.automate_started = automate_started
-    sat_pass.aos_time = aos_time
-    sat_pass.los_time = los_time
+    sat_pass.automate_started = datetime.datetime.utcfromtimestamp(automate_started)
+    sat_pass.aos_time = datetime.datetime.utcfromtimestamp(aos_time)
+    sat_pass.los_time = datetime.datetime.utcfromtimestamp(los_time)
     sat_pass.max_elev = max_elev
     sat_pass.record_time = record_time
 
