@@ -76,7 +76,8 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
         return
 
     engine = models.init(config)
-    session = models.get_session(engine)
+    session_maker = models.get_session(engine)
+    session = session_maker()
 
     cur_path = os.path.dirname(os.path.abspath(__file__))
     template_env = Environment(
