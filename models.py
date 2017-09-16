@@ -29,6 +29,7 @@ class Passes(Base):
     los_time = Column(DateTime, nullable=False)
     max_elev = Column(Integer, nullable=False)
     record_time = Column(Integer, nullable=False)
+    sat_type = Column(String, nullable=True)
 
     def __repr__(self):
         return "<Passes(id='%i', sat='%s', aos='%s', los='%s', max_elev='%i')>".format(
