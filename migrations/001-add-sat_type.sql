@@ -1,0 +1,1 @@
+ALTER TABLE passes ADD COLUMN sat_type VARCHAR;
