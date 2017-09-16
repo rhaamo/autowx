@@ -10,8 +10,8 @@
         <table class="table">
             <tbody>
                 <tr><td>Sat</td><td>{{ sat_name}}</td></tr>
-                <tr><td>AOS</td><td>{{ aos_time | datetime(true) }} UTC</td></tr>
-                <tr><td>LOS</td><td>{{ los_time | datetime(true) }} UTC</td></tr>
+                <tr><td>AOS</td><td>{{ aos_time.strftime("%Y-%m-%d %H:%M:%S") }} UTC</td></tr>
+                <tr><td>LOS</td><td>{{ los_time.strftime("%Y-%m-%d %H:%M:%S") }} UTC</td></tr>
                 <tr><td>Max El</td><td>{{ max_el }}&deg;</td></tr>
                 <tr><td>Rec time</td><td>{{ record_time | round }} seconds</td></tr>
             </tbody>

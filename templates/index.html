@@ -5,23 +5,29 @@
 {% block content %}
 <div class="row"><div class="col"><h1>Automatic Recording and Decoding of Low Earth Orbit Satellites.</h1></div></div>
 
-<div class="row"><div class="col">page nb. {{ page + 1 }}</div></div>
+<div class="row"><div class="col">Page {{ page + 1 }}/{{ pages }}.</div></div>
 
 <div class="row">
     <div class="col">
-        <ul>
-            {% for satpass in passes %}
-                <li>
-                    <a href="/{{ satpass['aos_time'] | datetime(true, '%Y-%m-%dT%H-%M-%S') }}.html">
-                        {{satpass['aos_time'] | datetime(true) }} UTC - {{ satpass['sat_name'] }} - {{ satpass['max_elev'] }}&deg; el
-                        {% if satpass['sat_type'] == "NOAA" %}
-                        <br />
-                        <img src="/img_noaa/{{ satpass['sat_name'] }}/.thumb_sm_{{ satpass['aos_time'] | datetime(false, '%Y%m%d-%H%M') }}-normal-map.jpg" width="200px">
-                        {% endif %}
+        {% for satpass in passes %}
+            <div class="row">
+                <div class="col">
+                    {% if satpass['sat_type'] == "NOAA" %}
+                        <img src="/img_noaa/{{ satpass['sat_name'] }}/.thumb_sm_{{ satpass['aos_time'].strftime('%Y%m%d-%H%M') }}-normal-map.jpg" width="200px">
+                    {% endif %}
+                </div>
+
+                <div class="col">
+                    <a href="/{{ satpass['aos_time'].strftime('%Y-%m-%dT%H-%M-%S') }}.html">
+                        {{ satpass['aos_time'].strftime("%Y-%m-%d %H:%M:%S") }} UTC
                     </a>
-                </li>
-            {% endfor %}
-        </ul>
+                    <br />
+                    {{ satpass['sat_name'] }}
+                    <br />
+                    max {{ satpass['max_elev'] }}&deg; el
+                </div>
+            </div>
+        {% endfor %}
     </div>
 </div>
 
