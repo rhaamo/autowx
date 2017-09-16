@@ -141,7 +141,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
     # Cycle over the CSV, regenerating home plus every pages splitted on config.passes_per_page
 
     # Latest first
-    passes = session.query(models.Passes).order_by(models.Passes.aos_time.asc())
+    passes = session.query(models.Passes).order_by(models.Passes.aos_time.desc())
 
     # (re)generate the home page
     passes_per_pages = config.getint('STATIC_WEB', 'passes_per_page')
