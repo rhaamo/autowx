@@ -22,7 +22,6 @@ import cfg
 import keps
 import noaa
 import web
-import models
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='AutoWX 1.0')
@@ -34,15 +33,9 @@ if __name__ == '__main__':
     if arguments['update-keps']:
         keps.update_keps(config, arguments['--force'])
     elif arguments['auto']:
-        # Do an init at start
-        models.init(config)
-
         if arguments['--force-keps-update']:
             keps.update_keps(config, force=True)
 
         noaa.auto_sat_magic(config, arguments['--config'])
     elif arguments['web']:
-        # Do an init at start
-        models.init(config)
-
         web.static_web_generation(config)
