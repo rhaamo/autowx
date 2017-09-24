@@ -64,6 +64,7 @@ def record_fm(config, frequency, filename, sleep_for, sat_name):
                '-E', 'offset',
                # '-E','pad',
                '-p', config.get('SDR', 'shift'),
+               '-d', config.get('SDR', 'index'),
                output_file]
 
     log_cmdline("RECORD FM", cmdline, config.getboolean("LOG", 'debug'))
