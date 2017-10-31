@@ -107,7 +107,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
     with open(dst_single_pass, 'w') as f:
         ctx = {
             'sat_name': sat_name,
-            'aos_time': aos_time,  # localtime
+            'aos_time': img_tstamp,  # use img_tstamp (localtime) instead of aos_time (UTC)
             'los_time': los_time,  # localtime
             'automate_started': automate_started,  # UTC (from time.time())
             'max_el': max_elev,
