@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
-from jinja2 import FileSystemLoader, Environment
+""" Web module to manage the database and template renderings """
 import math
-from wand.image import Image
 import os
 import datetime
-import cfg
 import time
+import cfg
 import models
+from jinja2 import FileSystemLoader, Environment
+from wand.image import Image
 
 
 def add_db_record(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
+    """ Add record of the pass to database """
     engine = models.init(config)
     session_maker = models.get_session(engine)
     session = session_maker()
@@ -28,7 +30,8 @@ def add_db_record(config, sat_name, automate_started, aos_time, los_time, max_el
 
 
 def format_datetime(date, utc=False, fmt=None):
-    if type(date) == str:
+    """ Format a datetime object to whatever format we want, used in templates """
+    if isinstance(date, str):
         date = float(date)
 
     if not fmt:
@@ -41,27 +44,33 @@ def format_datetime(date, utc=False, fmt=None):
 
 
 def generate_thumbnail(src, dst, size):
+    """ Generate a thumbnail """
     if not os.path.isfile(src):
-        print cfg.logLineStart + "Issue generating thumbnail, file not found: {}".format(src) + cfg.logLineEnd
+        print cfg.logLineStart + \
+            "Issue generating thumbnail, file not found: {}".format(src) + \
+            cfg.logLineEnd
         return
 
-    with Image(filename=src) as f:
-        f.resize(size[0], size[1])
-        f.save(filename=dst)
+    with Image(filename=src) as image_file:
+        image_file.resize(size[0], size[1])
+        image_file.save(filename=dst)
 
-    print cfg.logLineStart + "Generated thumbnail {}x{}: {}".format(size[0], size[1], dst) + cfg.logLineEnd
+    print cfg.logLineStart + \
+        "Generated thumbnail {}x{}: {}".format(size[0], size[1], dst) + \
+        cfg.logLineEnd
 
 
 def sat_type(sat_name):
+    """ Returns a standardised satellite string name """
     if 'NOAA' in sat_name:
         return 'NOAA'
     elif 'METEOR' in sat_name:
         return 'METEOR'
-    else:
-        return 'OTHER'
+    return 'OTHER'
 
 
 def static_web_generation(config):
+    """ Generate the whole static web pages """
     engine = models.init(config)
     session = models.get_session(engine)
 
@@ -72,7 +81,9 @@ def static_web_generation(config):
 
 
 # Meteor is currently not managed
-def generate_static_web(config, sat_name, automate_started, aos_time, los_time, max_elev, record_time):
+def generate_static_web(config, sat_name, automate_started,
+                        aos_time, los_time, max_elev, record_time):
+    """ Generate static web pages """
     if not config.getboolean("PROCESSING", "staticWeb"):
         return
 
@@ -88,12 +99,15 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
     template_env.filters['datetime'] = format_datetime
 
     def render_template(template, context):
+        """ Render the template """
         return template_env.get_template(template).render(context)
 
     emerge_time_utc = time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(aos_time))
 
     if not os.path.exists(config.get("DIRS", "staticWeb")):
-        print cfg.logLineStart + "PATH for static web doesn't exist, can't generate web pages" + cfg.logLineEnd
+        print cfg.logLineStart + \
+            "PATH for static web doesn't exist, can't generate web pages" + \
+            cfg.logLineEnd
         return
 
     # Generate the web page of the pass itself
@@ -104,7 +118,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
 
     # timestamp - UTC
     img_tstamp = datetime.datetime.utcfromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
-    with open(dst_single_pass, 'w') as f:
+    with open(dst_single_pass, 'w') as single_pass_file:
         ctx = {
             'sat_name': sat_name,
             'aos_time': aos_time,  # localtime
@@ -134,7 +148,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
             }
 
         html = render_template(config.get('STATIC_WEB', 'single_pass'), ctx)
-        f.write(html)
+        single_pass_file.write(html)
         print cfg.logLineStart + "Wrote web page for single NOAA pass" + cfg.logLineEnd
 
     # Generate the home page of the passes
@@ -153,7 +167,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
 
     index_page = os.path.join(
         config.get("DIRS", "staticWeb"), "index.html")
-    with open(index_page, 'w') as f:
+    with open(index_page, 'w') as index_page_file:
         ctx = {
             'passes': home_passes,
             'passes_per_pages': passes_per_pages,
@@ -164,7 +178,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
             'pages_list': range(0, pages),
         }
         html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
-        f.write(html)
+        index_page_file.write(html)
         page = 1  # index created, increment page
         print cfg.logLineStart + \
               "Wrote web page for index passes, page 0 0-{}".format(passes_per_pages) + \
@@ -172,12 +186,13 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
 
     if passes.count() > passes_per_pages:
         # We have more pages to show
-        for p in range(1, pages):
+        for _ in range(1, pages):
             start_passes = (page * passes_per_pages)
             page_passes = passes[start_passes:start_passes + passes_per_pages]
-            passes_page = os.path.join(config.get("DIRS", "staticWeb"), "index_{}.html".format(page))
+            passes_page = os.path.join(config.get("DIRS", "staticWeb"),
+                                       "index_{}.html".format(page))
 
-            with open(passes_page, 'w') as f:
+            with open(passes_page, 'w') as passes_page_file:
                 ctx = {
                     'passes': page_passes,
                     'passes_per_pages': passes_per_pages,
@@ -188,7 +203,7 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
                     'pages_list': range(0, pages),
                 }
                 html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
-                f.write(html)
+                passes_page_file.write(html)
                 print cfg.logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
                     page, start_passes, start_passes + passes_per_pages
                 ) + cfg.logLineEnd
