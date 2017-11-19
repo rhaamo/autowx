@@ -180,7 +180,7 @@ def decode_qpsk(config):
 def decode(config, filename, aos_time, sat_name, max_elev, record_len, wxtoimg_cfg):
     xf_no_space = sat_name.replace(" ", "")
     sat_timestamp = int(filename)
-    file_name_c = datetime.datetime.fromtimestamp(sat_timestamp).strftime('%Y%m%d-%H%M')
+    file_name_c = datetime.datetime.utcfromtimestamp(sat_timestamp).strftime('%Y%m%d-%H%M')
 
     in_wav = os.path.join(config.get('DIRS', 'rec'), "{}-{}.wav".format(xf_no_space, filename))
     wxtoimg_bin = os.path.join(config.get('DIRS', 'wxInstall'), "wxtoimg")
