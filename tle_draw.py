@@ -14,7 +14,7 @@ def generate_pass_trace(config, transit, tle_sat, sat_name, sat_timestamp):
     # Config
     qth = (config.getfloat('QTH', 'lat'), config.getfloat('QTH', 'lon'), config.getint('QTH', 'alt'))
 
-    file_name_c = datetime.datetime.fromtimestamp(int(sat_timestamp)).strftime('%Y%m%d-%H%M')
+    file_name_c = datetime.datetime.utcfromtimestamp(int(sat_timestamp)).strftime('%Y%m%d-%H%M')
     out_img = os.path.join(config.get('DIRS', 'img'), sat_name, "{}-sky-trace.jpg".format(file_name_c))
 
     # The rest
