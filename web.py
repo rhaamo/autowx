@@ -102,8 +102,8 @@ def generate_static_web(config, sat_name, automate_started, aos_time, los_time, 
     dst_single_pass = os.path.join(
         config.get("DIRS", "staticWeb"), "{}.html".format(emerge_time_utc.replace(":", "-")))
 
-    # timestamp - local time
-    img_tstamp = datetime.datetime.fromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
+    # timestamp - UTC
+    img_tstamp = datetime.datetime.utcfromtimestamp(aos_time).strftime('%Y%m%d-%H%M')
     with open(dst_single_pass, 'w') as f:
         ctx = {
             'sat_name': sat_name,
