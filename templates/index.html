@@ -10,7 +10,7 @@
 <div class="row">
     <div class="col">
         {% for satpass in passes %}
-            <div class="row">
+            <div class="row index_row">
                 <div class="col">
                     {% if satpass['sat_type'] == "NOAA" %}
                         <img src="/img_noaa/{{ satpass['sat_name'] }}/.thumb_sm_{{ satpass['aos_time'].strftime('%Y%m%d-%H%M') }}-normal-map.jpg" width="200px">
@@ -30,6 +30,8 @@
         {% endfor %}
     </div>
 </div>
+
+<hr>
 
 <div class="row">
     <div class="col">Displaying {{ start }} / {{ start + passes_per_pages }} passes of {{ total }}.</div>
