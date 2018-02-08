@@ -9,7 +9,7 @@ assumptions: Linux-based computer, rtl-sdr usb dongle, stationary antenna, exper
 
 goal:  record wav files for later processing, postprocess wav file, generate image, send images using SCP. Decode Meteor M2 images.
 
-prerequistes:  working rtl-sdr, nsat/pypredict libraries, basic python libraries (subprocess, os, re, sys, time, datetime), tledraw uses matplotlib+pylab+numpy, sox, gnuradio, XvFB, WINE, Oleg LRPT Offline decoder, setup noaa.py/pypredict.py, setup all scripts
+prerequistes:  working rtl-sdr, nsat/pypredict libraries, basic python libraries (subprocess, os, re, sys, time, datetime), tledraw uses matplotlib+pylab+numpy, sox, gnuradio, XvFB, WINE, Oleg LRPT Offline decoder, setup all scripts
 
 NO WARRANTY:  ALL USE IS AT THE RISK OF THE USER.  These are scripts I use for hobbyist purposes.  There may
 be pre-requisites or system configuration differences which you will need to resolve in order to make use of these scripts in your project.  To do so requires patience and and, quite often, previous experience programming python 
@@ -42,7 +42,7 @@ NEW:
 
 Installing autowx:
 
-    git pull https://github.com/cyber-atomus/autowx.git
+    git pull https://github.com/rhaamo/autowx.git
 
 You MUST create different folder for Meteor M2 images/logs and ini files.
 Then create a symlink to it in ```~/.wine/dosdevices/X```: (where X is desired virtual disk drive) and copy LRPT decoder as ```rgb.exe``` and ```mono.exe``` (important).
@@ -50,9 +50,8 @@ Now edit the file ```meteor_qpsk``` and change DRIVE_LETTER to your drive letter
 ```(rgb|mono).ini``` must be in the same dir as ```(rgb|mono).exe```, otherwise it won't decode pictures automatically and process will stall.
 If you wish not to decode automatically, set meteorDecode to 'no' in noaa.py. 
 
-### auto.py
-This is the main python script.  It will calculate the time of the next pass for recording.  It expects to call rtl_fm to do the recording and sox to convert the file to .wav. It can create spectrogram of the pass using sox (not the RTL_POWER!).
-Station options are set in the script.
+### Configuration
+Look at ```autowx.ini```
 
 ### usage
 ```
@@ -69,6 +68,8 @@ Options:
   --debug           Log debug.
   --config=<cfg>    Configuration file to use [default: autowx.ini]
 ```
+
+Quick start: ```./autowx.py auto --config autowx.ini --force-keps-update```
 
 #### A few words about the options.
 * systemDir - directory where all scripts reside
