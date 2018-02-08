@@ -50,9 +50,25 @@ Now edit the file ```meteor_qpsk``` and change DRIVE_LETTER to your drive letter
 ```(rgb|mono).ini``` must be in the same dir as ```(rgb|mono).exe```, otherwise it won't decode pictures automatically and process will stall.
 If you wish not to decode automatically, set meteorDecode to 'no' in noaa.py. 
 
-### noaa.py
+### auto.py
 This is the main python script.  It will calculate the time of the next pass for recording.  It expects to call rtl_fm to do the recording and sox to convert the file to .wav. It can create spectrogram of the pass using sox (not the RTL_POWER!).
 Station options are set in the script.
+
+### usage
+```
+Usage:
+  autowx.py update-keps [--config=<cfg>] [--force]
+  autowx.py auto [--config=<cfg>] [--force-keps-update]
+  autowx.py web [--config=<cfg>]
+  autowx.py (-h | --help)
+  autowx.py --version
+
+Options:
+  -h --help         Show this screen.
+  --version         Show version.
+  --debug           Log debug.
+  --config=<cfg>    Configuration file to use [default: autowx.ini]
+```
 
 #### A few words about the options.
 * systemDir - directory where all scripts reside

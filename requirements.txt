@@ -1,0 +1,7 @@
+jinja2
+docopt
+pypredict
+Wand
+sqlalchemy
+matplotlib
+numpy

@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ sat_name }} AOS: {{ aos_time | datetime(true) }} UTC, LOS: {{ los_time | datetime(true) }} UTC{% endblock %}
+
+{% block content %}
+<div class="row"><div class="col"><h1><a href="..">back &raquo;</a> {{ sat_name }} on {{ aos_time | datetime(true) }} UTC</h1></div></div>
+
+<div class="row">
+    <div class="col">
+        <table class="table">
+            <tbody>
+                <tr><td>Sat</td><td>{{ sat_name}}</td></tr>
+                <tr><td>AOS</td><td>{{ aos_time | datetime(true) }} UTC</td></tr>
+                <tr><td>LOS</td><td>{{ los_time | datetime(true) }} UTC</td></tr>
+                <tr><td>Max El</td><td>{{ max_el }}&deg;</td></tr>
+                <tr><td>Rec time</td><td>{{ record_time | round }} seconds</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col">
+        <div class="picture">
+            <div class="header">{{ sat_name }} - Normal Map</div>
+            <div class="img">
+                <a href="/img_noaa/{{ sat_name }}/{{ img_tstamp }}-normal-map.jpg" title="See full res">
+                    <img src="/img_noaa/{{ sat_name }}/.thumb_{{ img_tstamp }}-normal-map.jpg" width="300px">
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="picture">
+            <div class="header">Overlay Map</div>
+            <div class="img">
+                <a href="/maps_noaa/{{ aos_time }}-map.png" title="See full res">
+                    <img class="rotateUpDown" src="/maps_noaa/.thumb_sm_{{ aos_time }}-map.png" height="354px">
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="picture">
+            <div class="header">Sky track</div>
+            <div class="img">
+                <a href="/img_noaa/{{ sat_name }}/{{ img_tstamp }}-sky-trace.jpg" title="See full res">
+                    <img src="/img_noaa/{{ sat_name }}/{{ img_tstamp }}-sky-trace.jpg" width="300px">
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+{% if enhancements %}
+    <div class="row">
+        {% for enh in enhancements %}
+            <div class="col">
+                <div class="picture">
+                    <div class="header">{{ sat_name }} - {{ enh['name'] }} Map</div>
+                    <div class="img">
+                        <a href="/img_noaa/{{ sat_name }}/{{ enh['img_path'] }}" title="See full res">
+                            <img src="/img_noaa/{{ sat_name }}/.thumb_sm_{{ enh['img_path'] }}" width="300px">
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% endblock %}

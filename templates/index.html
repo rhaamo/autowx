@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block title %}Automatic Decoding of Weather Satellites{% endblock %}
+
+{% block content %}
+<div class="row"><div class="col"><h1>Automatic Recording and Decoding of Low Earth Orbit Satellites.</h1></div></div>
+
+<div class="row"><div class="col">Page {{ page + 1 }}/{{ pages }}.</div></div>
+
+<div class="row">
+    <div class="col">
+        {% for satpass in passes %}
+            <div class="row index_row justify-content-md-center">
+                <div class="col-lg-4">
+                    {% if satpass['sat_type'] == "NOAA" %}
+                        <img src="/img_noaa/{{ satpass['sat_name'] }}/.thumb_sm_{{ satpass['aos_time'].strftime('%Y%m%d-%H%M') }}-normal-map.jpg" width="200px">
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-3">
+                    <a href="/{{ satpass['aos_time'].strftime('%Y-%m-%dT%H-%M-%S') }}.html">
+                        {{ satpass['aos_time'].strftime("%Y-%m-%d %H:%M:%S") }} UTC
+                    </a>
+                    <br />
+                    {{ satpass['sat_name'] }}
+                    <br />
+                    max {{ satpass['max_elev'] }}&deg; el
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<hr>
+
+<div class="row">
+    <div class="col">Displaying {{ start }} / {{ start + passes_per_pages }} passes of {{ total }}.</div>
+</div>
+
+<div class="row">
+    <div class="col">
+        Page:
+        {% if pages == 1 %}
+            <a href="/index.html">1</a>
+        {% else %}
+            {% for p in pages_list %}
+                {% if p == 0 %}
+                    <a href="/index.html">1</a>&nbsp;
+                {% else %}
+                    {% if p == page %}<b>{% endif %}
+                    <a href="/index_{{ p }}.html">{{ p + 1 }}</a>
+                    {% if p == page %}</b>{% endif %}&nbsp;
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+
+{% endblock %}
