@@ -40,6 +40,8 @@ NEW:
   - WINE - for running Oleg's LRPT offline decoder (Meteor M2)
   - Xvfb - for running wine/LRPT decoder in Virtual Framebuffer (Meteor M2)
 
+Meteor not working / Untested for now.
+
 Installing autowx:
 
     git pull https://github.com/rhaamo/autowx.git
