@@ -646,6 +646,8 @@ def auto_sat_magic(config, cfg_file):
             if record_time < 1:
                 record_time = 1
 
+        pass_ok = True
+
         fname = str(aosTime)
         print cfg.logLineStart + "Beginning pass of " + cfg.AsciiColors.YELLOW + satName + cfg.AsciiColors.OKGREEN + \
               " at " + cfg.AsciiColors.CYAN + str(maxElev) + "\xb0" + cfg.AsciiColors.OKGREEN + " elev.\n" + \
@@ -657,31 +659,38 @@ def auto_sat_magic(config, cfg_file):
                      satName, maxElev, 'RECORDING')
 
         if satName in ('NOAA 15', 'NOAA 19', 'NOAA 18'):
-            record_wav(config, freq, fname, record_time, satName)
+            try:
+                record_wav(config, freq, fname, record_time, satName)
+            except:
+                pass_ok = False
         elif satName == 'METEOR-M 2':
             if config.getboolean("PROCESSING", "recordMeteor"):
-                record_qpsk(config, cfg_file, record_time)
+                try:
+                    record_qpsk(config, cfg_file, record_time)
+                except:
+                    pass_ok = False
         print cfg.logLineStart + "Decoding data" + cfg.logLineEnd
-        if satName in ('NOAA 15', 'NOAA 19', 'NOAA 18'):
+        if satName in ('NOAA 15', 'NOAA 19', 'NOAA 18') and pass_ok:
             write_status(config, freq, aosTime, los_time_cnv, str(losTime), str(record_time).split(".")[0], satName,
                          maxElev, 'DECODING')
             decode(config, fname, aosTime, satName, maxElev, record_time, wxtoimg_cfg)  # make picture
-        elif satName == 'METEOR-M 2':
+        elif satName == 'METEOR-M 2' and pass_ok:
             if config.getboolean('PROCESSING', 'decodeMeteor'):
                 print "This may take a loooong time and is resource hungry!!!"
                 write_status(config, freq, aosTime, los_time_cnv, str(losTime), str(record_time).split(".")[0], satName,
                              maxElev, 'DECODING')
                 decode_qpsk(config)
 
-        tle_draw.generate_pass_trace(config, pass_transit, tle_sat, satName, fname)
+        if pass_ok:
+            tle_draw.generate_pass_trace(config, pass_transit, tle_sat, satName, fname)
 
-        # No METEOR currently managed
-        # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
-        if 'NOAA' in satName:
-            web.add_db_record(config, satName, now, aosTime, losTime, maxElev, record_time)
-            web.generate_static_web(config, satName, now, aosTime, losTime, maxElev, record_time)
-        else:
-            print "METEOR currently not managed for static webpages generation"
+            # No METEOR currently managed
+            # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
+            if 'NOAA' in satName:
+                web.add_db_record(config, satName, now, aosTime, losTime, maxElev, record_time)
+                web.generate_static_web(config, satName, now, aosTime, losTime, maxElev, record_time)
+            else:
+                print "METEOR currently not managed for static webpages generation"
 
         print cfg.logLineStart + "Finished pass of " + cfg.AsciiColors.YELLOW + satName + cfg.AsciiColors.OKGREEN + \
               " at " + cfg.AsciiColors.CYAN + los_time_cnv + cfg.AsciiColors.OKGREEN + ". Sleeping for" + \
