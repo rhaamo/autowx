@@ -6,3 +6,10 @@ Anyway:
   - auto update keplers if older than 7 days ?
 
 CLI argument for checking directories if needed
+
+
+- METEOR
+    - Add meteor recorder cfg entry to avoid:
+        - mkdir /opt/wxsat/bin
+        - symlink meteor_qpsk.py
+
