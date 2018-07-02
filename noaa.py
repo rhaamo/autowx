@@ -673,13 +673,19 @@ def auto_sat_magic(config, cfg_file):
         if satName in ('NOAA 15', 'NOAA 19', 'NOAA 18') and pass_ok:
             write_status(config, freq, aosTime, los_time_cnv, str(losTime), str(record_time).split(".")[0], satName,
                          maxElev, 'DECODING')
-            decode(config, fname, aosTime, satName, maxElev, record_time, wxtoimg_cfg)  # make picture
+            try:
+                decode(config, fname, aosTime, satName, maxElev, record_time, wxtoimg_cfg)  # make picture
+            except:
+                pass_ok = False
         elif satName == 'METEOR-M 2' and pass_ok:
             if config.getboolean('PROCESSING', 'decodeMeteor'):
                 print "This may take a loooong time and is resource hungry!!!"
                 write_status(config, freq, aosTime, los_time_cnv, str(losTime), str(record_time).split(".")[0], satName,
                              maxElev, 'DECODING')
-                decode_qpsk(config)
+                try:
+                    decode_qpsk(config)
+                except:
+                    pass_ok = False
 
         if pass_ok:
             tle_draw.generate_pass_trace(config, pass_transit, tle_sat, satName, fname)
