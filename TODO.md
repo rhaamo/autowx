@@ -13,3 +13,4 @@ CLI argument for checking directories if needed
         - mkdir /opt/wxsat/bin
         - symlink meteor_qpsk.py
 
+Put rtl_fm bin path in config
