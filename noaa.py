@@ -651,7 +651,7 @@ def auto_sat_magic(config, cfg_file):
             if record_time < 1:
                 record_time = 1
 
-        pass_ok = True
+	pass_ok = True
 
         fname = str(aosTime)
         print cfg.logLineStart + "Beginning pass of " + cfg.AsciiColors.YELLOW + satName + cfg.AsciiColors.OKGREEN + \
