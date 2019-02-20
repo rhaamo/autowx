@@ -9,7 +9,7 @@ def init(config):
     """
     Returns the engine after creating all tables if needed.
     """
-    engine = create_engine(config.get('DB', 'path'), echo=True)
+    engine = create_engine(config.get('DB', 'path'), echo=False)
     Base.metadata.create_all(engine)
     return engine
 

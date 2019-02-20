@@ -180,9 +180,9 @@ def generate_static_web(config, sat_name, automate_started,
         html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
         index_page_file.write(html)
         page = 1  # index created, increment page
-        print cfg.logLineStart + \
-              "Wrote web page for index passes, page 0 0-{}".format(passes_per_pages) + \
-              cfg.logLineEnd
+        #print cfg.logLineStart + \
+        #      "Wrote web page for index passes, page 0 0-{}".format(passes_per_pages) + \
+        #      cfg.logLineEnd
 
     if passes.count() > passes_per_pages:
         # We have more pages to show
@@ -204,9 +204,9 @@ def generate_static_web(config, sat_name, automate_started,
                 }
                 html = render_template(config.get('STATIC_WEB', 'index_passes'), ctx)
                 passes_page_file.write(html)
-                print cfg.logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
-                    page, start_passes, start_passes + passes_per_pages
-                ) + cfg.logLineEnd
+                #print cfg.logLineStart + "Wrote web page for index passes, page {} {}-{}".format(
+                #    page, start_passes, start_passes + passes_per_pages
+                #) + cfg.logLineEnd
             page = page + 1  # page created, increment
 
     print cfg.logLineStart + "Finished web page processing" + cfg.logLineEnd

@@ -53,7 +53,7 @@ def record_fm(config, frequency, filename, sleep_for, sat_name):
     xf_no_space = sat_name.replace(" ", "")
     output_file = os.path.join(config.get('DIRS', 'rec'), "{}-{}.raw".format(xf_no_space, filename))
 
-    cmdline = ['/usr/bin/rtl_fm',
+    cmdline = [config.get('SDR', 'rtl_fm_bin'),
                '-f', str(frequency),
                '-s', config.get('SDR', 'sample'),
                '-g', config.get('SDR', 'gain'),
@@ -626,6 +626,11 @@ def auto_sat_magic(config, cfg_file):
         aos_time_cnv = strftime('%H:%M:%S', time.localtime(aosTime))
         los_time_cnv = strftime('%H:%M:%S', time.localtime(losTime))
 
+	print "now {}".format(now)
+	print "aosTime {}".format(aosTime)
+	print "aosTime > now {}".format(aosTime > now)
+	print "towait {}".format(towait)
+
         # OK, now we have to decide what if recording or sleeping
         if towait > 0:
             print cfg.logLineStart + "waiting " + cfg.AsciiColors.CYAN + str(towait).split(".")[
@@ -690,6 +695,7 @@ def auto_sat_magic(config, cfg_file):
         if pass_ok:
             tle_draw.generate_pass_trace(config, pass_transit, tle_sat, satName, fname)
 
+        if pass_ok:
             # No METEOR currently managed
             # Generate Static uses the CSV records so we should not add METEOR in it if not managed by the static thing
             if 'NOAA' in satName:

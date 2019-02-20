@@ -2,3 +2,6 @@
 *.pyc
 *.tmp
 .ropeproject/
+mine.ini
+mine_noaa.ini
+autowx.db
