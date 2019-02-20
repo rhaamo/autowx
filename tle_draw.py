@@ -45,7 +45,7 @@ def generate_pass_trace(config, transit, tle_sat, sat_name, sat_timestamp):
     plt.ioff()
 
     ax = matplotlib.pyplot.figure(figsize=(4.0, 4.0))
-    ax = plt.subplot(111, projection='polar', axisbg='#ECEFF1')  # create figure & 1 axis
+    ax = plt.subplot(111, projection='polar', facecolor='#ECEFF1')  # create figure & 1 axis
     ax.set_xticklabels([])
     ax.set_yticklabels([])
 
