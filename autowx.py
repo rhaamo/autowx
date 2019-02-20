@@ -30,12 +30,15 @@ if __name__ == '__main__':
 
     print "Using config file: {}".format(arguments['--config'])
 
-    if arguments['update-keps']:
-        keps.update_keps(config, arguments['--force'])
-    elif arguments['auto']:
-        if arguments['--force-keps-update']:
-            keps.update_keps(config, force=True)
-
-        noaa.auto_sat_magic(config, arguments['--config'])
-    elif arguments['web']:
-        web.static_web_generation(config)
+    try:
+      if arguments['update-keps']:
+          keps.update_keps(config, arguments['--force'])
+      elif arguments['auto']:
+          if arguments['--force-keps-update']:
+              keps.update_keps(config, force=True)
+  
+          noaa.auto_sat_magic(config, arguments['--config'])
+      elif arguments['web']:
+          web.static_web_generation(config)
+    except KeyboardInterrupt, e:
+      print "Exiting."
