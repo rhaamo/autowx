@@ -75,7 +75,7 @@ def static_web_generation(config):
     session = models.get_session(engine)
 
     # Latest first
-    passes = session.query(models.Passes).order_by(models.Passes.aos_time.asc())
+    passes = session().query(models.Passes).order_by(models.Passes.aos_time.asc())
 
     print passes
 
